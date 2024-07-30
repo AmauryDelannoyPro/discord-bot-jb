@@ -9,21 +9,33 @@ const port = 3000 // debug 3000, prod 80
 const client = new Discord.Client({ intents: 34304 })  //274877983808
 const channelIds = ["1262684763085475860"]
 
+function addUserMessage(usersMap, userId, message) {
+  if (!usersMap[userId]) {
+    usersMap[userId] = []
+  }
+  usersMap[userId].push(message)
+  return usersMap
+}
 
 function discordbot() {
   client.login(config.token)
   client.once("ready", () => {
-    console.log("ok")
-
     // Récupération des messages passés
     client.channels.fetch('1262684763085475860') //channel "bot-jb" //TODO ADEL passer liste de channel
-      .then((channel) => {
-        channel.messages.fetch()
+      .then(channel => {
+        channel.messages.fetch({ limit: 5 })
           .then(messages => {
-            var msg = messages.filter(message => {
-              return message.content.includes("test modif")
+            var users_messages_map = {}
+
+            messages.forEach(message => {
+              // TODO a voir si on passe par des class
+              const messageContent = {
+                id: message.id,
+                content: message.content,
+              }
+              users_messages_map = addUserMessage(users_messages_map, message.author.id, messageContent)
             })
-            console.log("filter", msg)
+            console.log(users_messages_map)
           })
           .catch(console.error);
       })
