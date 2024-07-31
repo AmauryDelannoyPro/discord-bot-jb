@@ -11,16 +11,16 @@ const client = new Discord.Client({ intents: 34304 })  //274877983808
 const channelIds = ["1262684763085475860"]
 
 function fetchMessages() {
-  client.channels.fetch('1262684763085475860') //channel "bot-jb" //TODO ADEL passer liste de channel
+  return client.channels.fetch('1262684763085475860') //channel "bot-jb" //TODO ADEL passer liste de channel
     .then(channel => {
-      channel.messages.fetch({ limit: 5 })
+      return channel.messages.fetch({ limit: 10 })
         .then(messages => {
-          // utils.log(messages);
-
-          // #region format-message-info
           var users_messages_map = {}
           messages.forEach(message => {
-            // TODO a voir si on passe par des class
+            if (message.author.bot) {
+              return; 
+            }
+
             const userContent = {
               id: message.author.id,
               name: message.author.globalName,
@@ -32,12 +32,8 @@ function fetchMessages() {
             }
             users_messages_map = utils.addUserMessage(users_messages_map, userContent, messageContent)
           })
-
-          utils.log(users_messages_map);
-          // #endregion
-
+          return users_messages_map
         })
-        .catch(console.error);
     })
     .catch(console.error);
 }
@@ -45,7 +41,7 @@ function fetchMessages() {
 function discordbot() {
   client.login(config.token)
   client.once("ready", () => {
-    fetchMessages()
+    webserver()
   });
 
   // #region events
@@ -72,22 +68,42 @@ function discordbot() {
 
 }
 
+function postMessageOnDiscord(message) {
+  client.channels.fetch('1262684763085475860') //TODO ADEL
+    .then(channel => {
+      channel.send(message)
+        .then(() => {
+          utils.log("Message posté")
+        })
+    })
+    .catch(console.error)
+}
 
 
 function webserver() {
+  app.use(express.static('public'));
+  app.use(express.json());
 
-  // Load resources files
-  // app.use(express.static('res')) #syntaxe de base, avec chemin relatif
-  app.use('/res', express.static(path.join(__dirname, 'res'))) // #chemin absolu
+  app.get('/api/messages', (req, res) => {
+    fetchMessages()
+      .then(data => {
+        res.json(data);
+      })
+      .catch(console.error);
+  });
 
-  app.get('/', (req, res) => {
-    res.send('Hello World!')
-  })
+  // Route pour recevoir et loguer le message
+  app.post('/api/send-message', (req, res) => {
+    const message = req.body.message;
+    utils.log('Message reçu:', message);
+    res.json({ status: 'Message reçu' });
+    postMessageOnDiscord(message)
+  });
+
 
   app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
+    console.log(`Server start on port ${port}`)
   })
 }
 
 discordbot()
-webserver()
