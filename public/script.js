@@ -43,5 +43,35 @@ function loadDynamicContent() {
         });
 }
 
+function postMessage() {
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value;
+    console.log("on va envoyer: ", message)
+
+    fetch('/api/send-message', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: message })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Message envoyé:', data);
+        messageInput.value = ''; 
+    })
+    .catch(error => {
+        console.error('Erreur lors de l\'envoi du message:', error);
+    });
+}
+
 // Charger les données dynamiques au chargement de la page
 window.onload = loadDynamicContent;
+
+// Ajouter un écouteur d'événements au bouton d'envoi
+document.getElementById('send-button').addEventListener('click', postMessage);
