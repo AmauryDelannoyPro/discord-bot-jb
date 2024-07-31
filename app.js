@@ -75,13 +75,11 @@ function discordbot() {
 
 
 function webserver() {
+  app.use(express.static('public'));
 
-  // Load resources files
-  // app.use(express.static('res')) #syntaxe de base, avec chemin relatif
-  app.use('/res', express.static(path.join(__dirname, 'res'))) // #chemin absolu
-
-  app.get('/', (req, res) => {
-    res.send('Hello World!')
+  app.get('/api/data', (req, res) => {
+    new Promise(resolve => setTimeout(() => resolve({ message: 'Données dynamiques chargées' }), 2000))
+        .then(data => res.json(data));
   })
 
   app.listen(port, () => {
@@ -89,5 +87,5 @@ function webserver() {
   })
 }
 
-discordbot()
+// discordbot()
 webserver()
