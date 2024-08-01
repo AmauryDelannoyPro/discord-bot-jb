@@ -5,19 +5,26 @@ const utils = require("./src/js/utils")
 const app = express()
 const port = process.env.PORT; // debug 3000, prod 80
 
-const client = new Discord.Client({ intents: process.env.DISCORD_INTENTS })  //274877983808
+const client = new Discord.Client({
+  intents: [
+    Discord.GatewayIntentBits.Guilds,
+    Discord.GatewayIntentBits.GuildMessages,
+    Discord.GatewayIntentBits.MessageContent,
+  ]
+});
+
 const channelIds = process.env.CHANNELS_LISTENED.split(',');
 const singleChannelListened = channelIds[0] //A retirer quand on aura un fetch d'une liste de channel
 
-function fetchMessages() {
-  return client.channels.fetch(singleChannelListened) //TODO ADEL passer liste de channel
+async function fetchMessages(channelId) {
+  return client.channels.fetch(channelId)
     .then(channel => {
       return channel.messages.fetch({ limit: 10 }) // A retirer
         .then(messages => {
           let users_messages_map = {}
           messages.forEach(message => {
             if (message.author.bot) {
-              return; 
+              return;
             }
 
             const userContent = {
@@ -84,7 +91,7 @@ function webserver() {
   app.use(express.json());
 
   app.get('/api/messages', (req, res) => {
-    fetchMessages()
+    fetchMessages(singleChannelListened) //TODO ADEL
       .then(data => {
         res.json(data);
       })
@@ -95,7 +102,6 @@ function webserver() {
   // Route pour recevoir et loguer le message
   app.post('/api/send-message', (req, res) => {
     const message = req.body.message;
-    utils.log('Message reçu:', message);
     res.json({ status: 'Message reçu' });
     postMessageOnDiscord(message)
   });
