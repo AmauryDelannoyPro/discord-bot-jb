@@ -6,11 +6,13 @@ module.exports = {
 
 function addUserMessage(usersMap, user, message) {
     if (!usersMap[user.id]) {
-        usersMap[user.id] = {}
-        usersMap[user.id]["user"] = user
-        usersMap[user.id]["messages"] = []
+        usersMap[user.id] = {
+            "user": user,
+            "messages": [message]
+        }
+    } else {
+        usersMap[user.id]["messages"].push(message)
     }
-    usersMap[user.id]["messages"].push(message)
     return usersMap
 }
 

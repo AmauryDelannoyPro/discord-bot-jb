@@ -1,21 +1,20 @@
 const express = require('express')
-const path = require('path')
 const Discord = require('discord.js')
-const config = require("./conf")
 const utils = require("./src/js/utils")
 
 const app = express()
-const port = 3000 // debug 3000, prod 80
+const port = process.env.PORT; // debug 3000, prod 80
 
-const client = new Discord.Client({ intents: 34304 })  //274877983808
-const channelIds = ["1262684763085475860"]
+const client = new Discord.Client({ intents: process.env.DISCORD_INTENTS })  //274877983808
+const channelIds = process.env.CHANNELS_LISTENED.split(',');
+const singleChannelListened = channelIds[0] //A retirer quand on aura un fetch d'une liste de channel
 
 function fetchMessages() {
-  return client.channels.fetch('1262684763085475860') //channel "bot-jb" //TODO ADEL passer liste de channel
+  return client.channels.fetch(singleChannelListened) //TODO ADEL passer liste de channel
     .then(channel => {
-      return channel.messages.fetch({ limit: 10 })
+      return channel.messages.fetch({ limit: 10 }) // A retirer
         .then(messages => {
-          var users_messages_map = {}
+          let users_messages_map = {}
           messages.forEach(message => {
             if (message.author.bot) {
               return; 
@@ -30,6 +29,7 @@ function fetchMessages() {
               content: message.content,
               timestamp: utils.getMostRecentTimestamp(message.editedTimestamp, message.createdTimestamp)
             }
+
             users_messages_map = utils.addUserMessage(users_messages_map, userContent, messageContent)
           })
           return users_messages_map
@@ -39,7 +39,7 @@ function fetchMessages() {
 }
 
 function discordbot() {
-  client.login(config.token)
+  client.login(process.env.DISCORD_BOT_TOKEN)
   client.once("ready", () => {
     webserver()
   });
@@ -63,13 +63,12 @@ function discordbot() {
     console.err(err)
   })
   // #endregion
-
-
-
 }
 
+
+
 function postMessageOnDiscord(message) {
-  client.channels.fetch('1262684763085475860') //TODO ADEL
+  client.channels.fetch(singleChannelListened) //TODO ADEL
     .then(channel => {
       channel.send(message)
         .then(() => {
@@ -91,6 +90,7 @@ function webserver() {
       })
       .catch(console.error);
   });
+
 
   // Route pour recevoir et loguer le message
   app.post('/api/send-message', (req, res) => {
