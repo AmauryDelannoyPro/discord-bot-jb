@@ -73,11 +73,40 @@ function discordbot() {
 }
 
 
-
-function postMessageOnDiscord(message) {
-  client.channels.fetch(singleChannelListened) //TODO ADEL
+/**
+ * Post a message on channel with our message
+ * @deprecated Use replyMessageOnDiscord(message, messageIdToReply) instead
+ * @param {string} channelId 
+ * @param {*} message our answer / evaluation
+ */
+function postMessageOnDiscord(channelId, message) {
+  client.channels.fetch(channelId) 
     .then(channel => {
       channel.send(message)
+        .then(() => {
+          utils.log("Message posté")
+        })
+    })
+    .catch(console.error)
+}
+
+/**
+ * Reply to a message with our message
+ * @param {string} channelId 
+ * @param {*} message our answer / evaluation
+ * @param {string} messageIdToReply message evaluated containing video
+ */
+function replyMessageOnDiscord(channelId, message, messageIdToReply) {
+  client.channels.fetch(channelId)
+    .then(channel => {
+      channel.send(
+        {
+          content: message,
+          reply: {
+            messageReference: messageIdToReply
+          }
+        }
+      )
         .then(() => {
           utils.log("Message posté")
         })
@@ -102,8 +131,10 @@ function webserver() {
   // Route pour recevoir et loguer le message
   app.post('/api/send-message', (req, res) => {
     const message = req.body.message;
+    const messageEvaluatedId = "1267872280072163430"
     res.json({ status: 'Message reçu' });
-    postMessageOnDiscord(message)
+    
+    replyMessageOnDiscord(singleChannelListened, message, messageEvaluatedId) //TODO ADEL
   });
 
 
