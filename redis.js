@@ -11,7 +11,7 @@ const client = redis.createClient({
 client.on('error', err => console.log('Redis Client Error', err));
 
 async function main() {
-    await client.connect();
+    await client.connect(); //TODO ADEL se renseigner sur multi() ?
 
     // Init data set
     const messageKey1 = "idMessage1"
@@ -29,7 +29,7 @@ async function main() {
         date: "01-01-1991 02:10:00",
         content: "Premier message en 'BDD' Redis"
     }
-    
+
     const messageKey2 = "idMessage2"
     const message2 = {
         id: messageKey2,
@@ -62,25 +62,25 @@ async function main() {
     // Store List
     saveRedisList("messages", messages)
     // Read List
-    const getMessages = await getRedisList("messages") 
+    const getMessages = await getRedisList("messages")
     console.log(getMessages)
 }
 
-async function saveRedisObject(objectId, object){
+async function saveRedisObject(objectId, object) {
     await client.hSet(objectId, serialize(object)); // hSet pour map
 }
 
-async function getRedisObject(objectId){
+async function getRedisObject(objectId) {
     const obj = await client.hGetAll(objectId);
     return deserialize(obj);
 }
 
-async function saveRedisList(listId, list){
+async function saveRedisList(listId, list) {
     await client.rPush(listId, list.map(message => JSON.stringify(serialize(message)))); // rPush (=append) ou lPush (="insert(0)"") pour list
 }
 
-async function getRedisList(listId){
-    const response = await client.lRange(listId, 0, -1); 
+async function getRedisList(listId) {
+    const response = await client.lRange(listId, 0, -1);
     return response.map(serializedMessage => deserialize(JSON.parse(serializedMessage)));
 }
 
@@ -108,4 +108,63 @@ function deserialize(obj) {
     return deserializedObj;
 }
 
+// Map Keys will be like "user:idUser1", "user:idUser2", "channel:idUser1". Use formatUniqueKey() function like this: formatUniqueKey(MapKeyPrefix.MESSAGE, "idMessage123")
+// List Ids will be like "channels", "users". Just use ListKey.USERS
+const MapKeyPrefix = {
+    MESSAGE: "message:",
+    USER: "user:",
+    EVALUATION: "evaluation:",
+    CHANNEL: "channel:"
+}
+
+const ListKey = {
+    ROLES: "roles",
+    USERS: "users",
+    EVALUATIONS: "evaluations",
+    EVALUATION_CRITERIAS: "evaluation_criterias"
+}
+
+function formatUniqueKey(prefix, objectId) {
+    return prefix + objectId
+}
+
+async function scanBdd() {
+    // Boucle infini, chatGPT m'a donné du caca mais affiche quand meme le contenu de la BDD
+    await client.connect();
+    let cursor = '0';
+    do {
+        const reply = await client.scan(cursor);
+        cursor = reply.cursor;
+        const keys = reply.keys;
+
+        for (const key of keys) {
+            const type = await client.type(key);
+            let value;
+            switch (type) {
+                case 'string':
+                    value = await client.get(key);
+                    break;
+                case 'hash':
+                    value = await client.hGetAll(key);
+                    break;
+                case 'list':
+                    value = await client.lRange(key, 0, -1);
+                    break;
+                case 'set':
+                    value = await client.sMembers(key);
+                    break;
+                case 'zset':
+                    value = await client.zRange(key, 0, -1);
+                    break;
+                default:
+                    value = 'Unsupported type';
+            }
+            console.log(`Key: ${key}, Type: ${type}, Value:`, value);
+        }
+    } while (cursor !== '0');
+
+    await client.quit();
+}
+
 main()
+// scanBdd()
