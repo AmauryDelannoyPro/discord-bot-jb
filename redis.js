@@ -1,3 +1,7 @@
+module.exports = {
+    getUsers
+};
+
 const redis = require('redis');
 
 // Créer une instance de client Redis
@@ -28,7 +32,7 @@ function formatUniqueKey(prefix, objectId, suffix) {
 }
 
 function initDataSet() {
-    const users = [ //TODO rajouter liste message
+    const users = [
         { id: 'user1', name: 'Alice' },
         { id: 'user2', name: 'Bob' },
         { id: 'user3', name: 'Charlie' },
@@ -230,6 +234,26 @@ function initDataSet() {
     }
 }
 
+async function getUsers() {
+    let cursor = 0;
+    const users = [];
+
+    do {
+        const reply = await client.scan(cursor, { MATCH: IdConstants.USER + ':*' });
+        cursor = reply.cursor;
+        const keys = reply.keys;
+
+        for (const key of keys) {
+            if (key.startsWith(IdConstants.USER) && !key.endsWith(IdConstants.MESSAGES)) {
+                const user = await getRedisObject(key);
+                users.push(user);
+            }
+        }
+    } while (cursor !== 0);
+
+    return users;
+}
+
 async function getUserMessages(userId) {
     const messageKeys = await client.sMembers(formatUniqueKey(IdConstants.USER, userId, IdConstants.MESSAGES));
     const messages = [];
@@ -284,6 +308,9 @@ async function main() {
 
     console.log(user)
     console.log(messagesUser)
+
+    const users = await getUsers()
+    console.log(users)
 }
 
 main()

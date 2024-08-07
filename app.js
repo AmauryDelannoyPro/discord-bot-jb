@@ -1,6 +1,7 @@
 const express = require('express')
 const Discord = require('discord.js')
 const utils = require("./src/js/utils")
+const redis = require("./redis")
 
 const app = express()
 const port = process.env.PORT; // debug 3000, prod 80
@@ -80,7 +81,7 @@ function discordbot() {
  * @param {*} message our answer / evaluation
  */
 function postMessageOnDiscord(channelId, message) {
-  client.channels.fetch(channelId) 
+  client.channels.fetch(channelId)
     .then(channel => {
       channel.send(message)
         .then(() => {
@@ -120,7 +121,16 @@ function webserver() {
   app.use(express.json());
 
   app.get('/api/messages', (req, res) => {
-    fetchMessages(singleChannelListened) //TODO ADEL
+    fetchMessages(singleChannelListened)
+      .then(data => {
+        res.json(data);
+      })
+      .catch(console.error);
+  });
+
+  // Route pour récupérer la liste des utilisateurs
+  app.get('/api/get-users', (req, res) => {
+    redis.getUsers() 
       .then(data => {
         res.json(data);
       })
@@ -133,8 +143,8 @@ function webserver() {
     const message = req.body.message;
     const messageEvaluatedId = "1267872280072163430"
     res.json({ status: 'Message reçu' });
-    
-    replyMessageOnDiscord(singleChannelListened, message, messageEvaluatedId) //TODO ADEL
+
+    replyMessageOnDiscord(singleChannelListened, message, messageEvaluatedId)
   });
 
 

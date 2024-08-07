@@ -30,7 +30,7 @@ function formatUsersMessages(messagesByUsers) {
 }
 
 function loadDynamicContent() {
-    fetch('/api/messages') 
+    fetch('/api/messages')
         .then(response => {
             return response.json();
         })
@@ -55,23 +55,58 @@ function postMessage() {
         },
         body: JSON.stringify({ message: message })
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Message envoyé:', data);
-        messageInput.value = ''; 
-    })
-    .catch(error => {
-        console.error('Erreur lors de l\'envoi du message:', error);
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Message envoyé:', data);
+            messageInput.value = '';
+        })
+        .catch(error => {
+            console.error('Erreur lors de l\'envoi du message:', error);
+        });
+}
+
+// #region users
+function loadUsersContent() {
+    fetch('/api/get-users')
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+            console.log("reçu ", data)
+            formatUsersInfo(data);
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            document.getElementById('list-user-content').textContent = 'Erreur lors du chargement des données.';
+        });
+}
+
+function formatUsersInfo(users) {
+    const container = document.getElementById('list-user-content');
+    container.innerHTML = '';
+
+    const userList = document.createElement('ul');
+    users.forEach( user => {
+        const userItem = document.createElement('li');
+        userItem.innerHTML = `Nom : ${user.name}`;
+        userList.appendChild(userItem);
     });
+    container.appendChild(userList);
+}
+// #endregion
+
+function initView() {
+    // loadDynamicContent()
+    loadUsersContent()
 }
 
 // Charger les données dynamiques au chargement de la page
-window.onload = loadDynamicContent;
+window.onload = initView;
 
 // Ajouter un écouteur d'événements au bouton d'envoi
 document.getElementById('send-button').addEventListener('click', postMessage);
