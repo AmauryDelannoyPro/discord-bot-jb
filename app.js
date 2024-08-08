@@ -128,9 +128,21 @@ function webserver() {
       .catch(console.error);
   });
 
+
   // Route pour récupérer la liste des utilisateurs
   app.get('/api/get-users', (req, res) => {
     redis.getUsers() 
+      .then(data => {
+        res.json(data);
+      })
+      .catch(console.error);
+  });
+
+
+  // Route pour récupérer la liste des messages utilisateur
+  app.get('/api/get-user-messages', (req, res) => {
+    const userId = req.query.userId;
+    redis.getUserMessages(userId) 
       .then(data => {
         res.json(data);
       })

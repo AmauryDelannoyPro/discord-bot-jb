@@ -1,5 +1,6 @@
 module.exports = {
-    getUsers
+    getUsers,
+    getUserMessages
 };
 
 const redis = require('redis');
@@ -313,4 +314,4 @@ async function main() {
     console.log(users)
 }
 
-main()
+// main()
