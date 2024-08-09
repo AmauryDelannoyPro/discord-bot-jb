@@ -72,11 +72,11 @@ function formatUserMessagesInfo(messages) {
     container.innerHTML = '';
 
     const userList = document.createElement('ul');
-    messages.forEach(message => {
-        const userItem = document.createElement('li');
-        userItem.innerHTML = `Message : ${message.content}`;
-        userList.appendChild(userItem);
-    });
+        messages.forEach(message => {
+            const userItem = document.createElement('li');
+            userItem.innerHTML = `Message : ${message.content}`;
+            userList.appendChild(userItem);
+        });
     container.appendChild(userList);
 }
 // #endregion
