@@ -1,1 +1,4 @@
 .dev.env
+node_modules/
+package-lock.json
+*.code-workspace
