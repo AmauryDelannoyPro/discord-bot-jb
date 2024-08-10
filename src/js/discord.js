@@ -70,7 +70,6 @@ async function fetchMessages(channelId, limit = 5) { // Limite a gérer
 async function getChannelMessages(channelIdList) {
     let allMessages = []
 
-    //TODO ADEL faire ça pour paralléliser la création de messages, users et tout
     const fetchPromises = channelIdList.map(channelId => {
         if (channelId.length !== 0) {
             return fetchMessages(channelId)

@@ -227,20 +227,24 @@ async function initDataSet() {
 }
 
 async function saveUsers(users) {
-    for (const user of users){
+    const fetchPromises = users.map(user => {
         const key = formatUniqueKey(IdConstants.USER, user.id);
-        await saveRedisObject(key, user)
-    }
+        return saveRedisObject(key, user)
+    })
+    await Promise.all(fetchPromises)
 }
 
 async function saveMessages(messages){
-    for (const message of messages){
+    const fetchMessagesPromises = messages.map(message => {
         const key = formatUniqueKey(IdConstants.MESSAGE, message.id);
-        await saveRedisObject(key, message)
-
+        return saveRedisObject(key, message)
+    })
+    const fetchUserMessagesPromises = messages.map(message => {
+        const key = formatUniqueKey(IdConstants.MESSAGE, message.id);
         const keyMessages = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.MESSAGES);
-        await client.sAdd(keyMessages, key)
-    }
+        return client.sAdd(keyMessages, key)
+    })
+    await Promise.all([fetchMessagesPromises, fetchUserMessagesPromises])
 }
 
 async function getUsers() {
@@ -271,11 +275,12 @@ async function getUserMessages(id) {
     const messageKeys = await client.sMembers(formatUniqueKey(IdConstants.USER, id, IdConstants.MESSAGES));
     const messages = [];
 
-    for (const key of messageKeys) {
-        const message = await getRedisObject(key);
+    const fetchMessagesPromises = messageKeys.map(async (key) => {
+        const message = await getRedisObject(key)
         messages.push(message);
-    }
+    })
 
+    await Promise.all(fetchMessagesPromises)
     return messages;
 }
 
@@ -293,8 +298,6 @@ function serialize(obj) {
     for (const key in obj) {
         if (typeof obj[key] === 'object') {
             serializedObj[key] = JSON.stringify(obj[key]);
-        } else if (typeof obj[key] === 'number') {
-            serializedObj[key] = "'" + obj[key] + "'";
         } else {
             serializedObj[key] = obj[key];
         }

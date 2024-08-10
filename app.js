@@ -44,3 +44,5 @@ async function webserver() {
 }
 
 webserver()
+
+// TODO regarder cet article utilisant le cache Redis https://medium.com/@yurii.h.dev/nodejs-redis-how-and-why-88647af49e99
