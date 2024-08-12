@@ -38,6 +38,23 @@ function formatUniqueKey(prefix, objectId, suffix) {
     }
 }
 
+async function resetRedis() {
+    await client.flushAll()
+    console.log('Redis entirely cleared.');
+}
+
+async function saveRedisObject(objectId, object) {
+    await client.set(objectId, JSON.stringify(object));
+}
+
+async function getRedisObject(objectId) {
+    const data = await client.get(objectId);
+    return JSON.parse(data);
+}
+
+/**
+ * @deprecated Plus besoin maintenant que le lien Discord fonctionne
+ */
 async function initDataSet() {
     const users = [
         { id: 'user1', name: 'Alice' },
@@ -226,27 +243,8 @@ async function initDataSet() {
     await saveMessages(messages)
 }
 
-async function saveUsers(users) {
-    const fetchPromises = users.map(user => {
-        const key = formatUniqueKey(IdConstants.USER, user.id);
-        return saveRedisObject(key, user)
-    })
-    await Promise.all(fetchPromises)
-}
-
-async function saveMessages(messages){
-    const fetchMessagesPromises = messages.map(message => {
-        const key = formatUniqueKey(IdConstants.MESSAGE, message.id);
-        return saveRedisObject(key, message)
-    })
-    const fetchUserMessagesPromises = messages.map(message => {
-        const key = formatUniqueKey(IdConstants.MESSAGE, message.id);
-        const keyMessages = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.MESSAGES);
-        return client.sAdd(keyMessages, key)
-    })
-    await Promise.all([fetchMessagesPromises, fetchUserMessagesPromises])
-}
-
+// region user
+// ----- GETTERs -----
 async function getUsers() {
     let cursor = 0;
     const users = [];
@@ -271,6 +269,19 @@ async function getUsers() {
     return users;
 }
 
+// ----- SETTERS -----
+async function saveUsers(users) {
+    const fetchPromises = users.map(user => {
+        const key = formatUniqueKey(IdConstants.USER, user.id);
+        return saveRedisObject(key, user)
+    })
+    await Promise.all(fetchPromises)
+}
+// endregion user
+
+
+// region messages
+// ----- GETTERS -----
 async function getUserMessages(id) {
     const messageKeys = await client.sMembers(formatUniqueKey(IdConstants.USER, id, IdConstants.MESSAGES));
     const messages = [];
@@ -284,41 +295,27 @@ async function getUserMessages(id) {
     return messages;
 }
 
-async function saveRedisObject(objectId, object) {
-    await client.set(objectId, JSON.stringify(object));
+// ----- SETTERS -----
+async function saveMessages(messages) {
+    const fetchMessagesPromises = messages.map(message => {
+        const key = formatUniqueKey(IdConstants.MESSAGE, message.id);
+        return saveRedisObject(key, message)
+    })
+    const fetchUserMessagesPromises = messages.map(message => {
+        const key = formatUniqueKey(IdConstants.MESSAGE, message.id);
+        const keyMessages = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.MESSAGES);
+        return client.sAdd(keyMessages, key)
+    })
+    await Promise.all([fetchMessagesPromises, fetchUserMessagesPromises])
 }
+// endregion messages
 
-async function getRedisObject(objectId) {
-    const data = await client.get(objectId);
-    return JSON.parse(data);
-}
 
-function serialize(obj) {
-    const serializedObj = {};
-    for (const key in obj) {
-        if (typeof obj[key] === 'object') {
-            serializedObj[key] = JSON.stringify(obj[key]);
-        } else {
-            serializedObj[key] = obj[key];
-        }
-    }
-    return serializedObj;
-}
-
-function deserialize(obj) {
-    const deserializedObj = {};
-    for (const key in obj) {
-        try {
-            deserializedObj[key] = JSON.parse(obj[key]);
-        } catch (e) {
-            deserializedObj[key] = obj[key];
-        }
-    }
-    return deserializedObj;
-}
-
+/**
+ * Peut servir pour debug
+ */
 async function main() {
-    initDataSet()
+    // initDataSet()
 
     // const id = "user3"
     // const messagesUser = await getUserMessages(id)
@@ -330,12 +327,7 @@ async function main() {
     // const users = await getUsers()
     // console.log(users)
 
-    client.quit()
-}
-
-async function resetRedis() {
-    await client.flushAll()
-    console.log('Redis entirely cleared.');
+    // client.quit()
 }
 
 // resetRedis()

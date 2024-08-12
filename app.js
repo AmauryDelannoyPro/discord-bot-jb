@@ -39,10 +39,10 @@ async function webserver() {
     const messageToPost = req.body.message;
     res.json({ status: 'Message reçu' });
 
-    repo.replyMessageOnDiscord("1262684763085475860", messageToPost, "1267872280072163430")
+    repo.replyMessageOnDiscord("1262684763085475860", messageToPost, "1267872280072163430") //TODO 
   });
 }
 
 webserver()
 
-// TODO regarder cet article utilisant le cache Redis https://medium.com/@yurii.h.dev/nodejs-redis-how-and-why-88647af49e99
+// TODO ADEL Si besoin d'améliorer le cache, regarder ici https://medium.com/@yurii.h.dev/nodejs-redis-how-and-why-88647af49e99

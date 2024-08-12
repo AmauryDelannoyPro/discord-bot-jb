@@ -9,6 +9,7 @@ module.exports = {
 
 const Discord = require('discord.js')
 const utils = require("./utils")
+const repo = require("./dataRepository")
 const serverId = process.env.DISCORD_SERVER_ID
 
 const client = new Discord.Client({
@@ -20,6 +21,8 @@ const client = new Discord.Client({
     ]
 });
 
+const REACTION_MESSAGE_TO_IGNORE = ""
+
 async function init() {
     await client.login(process.env.DISCORD_BOT_TOKEN)    
     console.log("Discord connected !")
@@ -27,40 +30,56 @@ async function init() {
 
 client.on("messageCreate", (message) => {
     console.log("onMessageCreate", message.content)
-    //TODO ADEL envoyer l'info a dataRepository pour enregistrer le message
+    repo.saveMessage(formatMessage(message))
 })
 
 client.on("messageUpdate", (oldMessage, newMessage) => {
     const msg = "'" + oldMessage.content + "' devient '" + newMessage.content + "'"
     console.log("onMessageUpdate", msg)
-    //TODO ADEL envoyer l'info a dataRepository pour enregistrer le message
+    repo.saveMessage(formatMessage(newMessage))
 })
 
 client.on("messageDelete", (message) => {
     console.log("onMessageDelete", message.content)
-    //TODO ADEL envoyer l'info a dataRepository pour enregistrer le message
+    // TODO On s'en fout ?
 })
 
 client.on("error", (err) => {
     console.err(err)
 })
 
-async function fetchMessages(channelId, limit = 5) { // Limite a gérer
+function formatMessage(messageDiscord){
+    return {
+        id: messageDiscord.id,
+        authorId: messageDiscord.author.id,
+        channelId: messageDiscord.channelId,
+        content: messageDiscord.content,
+        createdAt: messageDiscord.createdTimestamp,
+        updatedAt: messageDiscord.editedTimestamp
+    }
+}
+
+function formatUser(userDiscord){
+    return {
+        id: userDiscord.user.id,
+        name: userDiscord.user.globalName,
+        avatar: userDiscord.user.displayAvatarURL()
+    }
+}
+
+async function fetchMessages(channelId, limit = 5) { // TODO Besoin d'une limite ? A tester sur un gros volume de messages
     utils.log("DISCORD start fetchMessages(" + channelId + ")");
 
     try {
         const channel = await client.channels.fetch(channelId);
-        const messages = await channel.messages.fetch({ limit: limit });
+        // const messages = await channel.messages.fetch({ limit: limit });
+        const messages = await channel.messages.fetch();
         return messages
             .filter(message => !message.author.bot)
-            .map(message => ({
-                id: message.id,
-                authorId: message.author.id,
-                channelId: message.channelId,
-                content: message.content,
-                createdAt: message.createdTimestamp,
-                updatedAt: message.editedTimestamp
-            }));
+            //TODO filtrer message avec vidéos
+            //TODO filtrer message sans la réaction REACTION_MESSAGE_TO_IGNORE (choisir l'émoji)
+            //TODO garder les messages de bot pour récup les évaluations à afficher dans l'historique
+            .map(message => formatMessage(message));
     } catch (error) {
         console.error(`Error fetching messages for channel ${channelId}:`, error);
         return [];
@@ -94,13 +113,7 @@ async function getUsers() {
 
         return members
             .filter(member => !member.user.bot)
-            .map(member => {
-                return {
-                    id: member.user.id,
-                    name: member.user.globalName,
-                    avatar: member.user.displayAvatarURL()
-                }
-            })
+            .map(member => formatUser(member))
     } catch (error) {
         console.error(error);
     }
