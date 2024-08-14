@@ -21,10 +21,12 @@ const client = new Discord.Client({
     ]
 });
 
-const REACTION_MESSAGE_TO_IGNORE = ""
+const REACTION_MESSAGE_TO_IGNORE = "🔕" //TODO fonctionne sur tous les OS ?
+const BOT_NAME = "JBot" // used when filtering bot messages
+const WEBSITE_DOMAIN_UPLOADED_VIDEO = ["youtube", "vimeo", "dailymotion"]
 
 async function init() {
-    await client.login(process.env.DISCORD_BOT_TOKEN)    
+    await client.login(process.env.DISCORD_BOT_TOKEN)
     console.log("Discord connected !")
 }
 
@@ -48,18 +50,32 @@ client.on("error", (err) => {
     console.err(err)
 })
 
-function formatMessage(messageDiscord){
+
+// region utils
+function formatMessage(messageDiscord) {
+    let attachments = []
+    messageDiscord.attachments.forEach(attachment => {
+        attachments.push(attachment.url)
+    })
+
+    let links = []
+    messageDiscord.embeds.forEach(embed => {
+        links.push(embed.url)
+    })
+
     return {
         id: messageDiscord.id,
         authorId: messageDiscord.author.id,
         channelId: messageDiscord.channelId,
         content: messageDiscord.content,
         createdAt: messageDiscord.createdTimestamp,
-        updatedAt: messageDiscord.editedTimestamp
+        updatedAt: messageDiscord.editedTimestamp,
+        links: links,
+        attachments: attachments
     }
 }
 
-function formatUser(userDiscord){
+function formatUser(userDiscord) {
     return {
         id: userDiscord.user.id,
         name: userDiscord.user.globalName,
@@ -67,19 +83,51 @@ function formatUser(userDiscord){
     }
 }
 
-async function fetchMessages(channelId, limit = 5) { // TODO Besoin d'une limite ? A tester sur un gros volume de messages
+async function filterMessage(messageDiscord) {
+    // Filter JBOT's messages : keep messages post by JBOT (it's an evaluation)
+    if (messageDiscord.author.username === BOT_NAME) {
+        return true
+    }
+
+    // Filter reactions : dont take message set to ignored by JBOT
+    const filteredReactions = messageDiscord.reactions.cache.find(reaction => reaction.emoji.name === REACTION_MESSAGE_TO_IGNORE);
+    if (filteredReactions) {
+        const users = await filteredReactions.users.fetch();
+        const botUsers = users.find(user => user.username == BOT_NAME);
+        if (botUsers) {
+            return false
+        }
+    }
+
+    // Filter videos : save only messages with attachment or link, to get video to evaluate
+    const isAttachment = messageDiscord.attachments.some(attachment => attachment.contentType.includes("video/"));
+    const isEmbed = messageDiscord.embeds.some(embed => WEBSITE_DOMAIN_UPLOADED_VIDEO.some(webDomain => embed.data.url.includes(webDomain)));
+
+    return isAttachment || isEmbed
+}
+// endregion utils
+
+
+async function fetchMessages(channelId) {
     utils.log("DISCORD start fetchMessages(" + channelId + ")");
 
     try {
         const channel = await client.channels.fetch(channelId);
-        // const messages = await channel.messages.fetch({ limit: limit });
         const messages = await channel.messages.fetch();
-        return messages
-            .filter(message => !message.author.bot)
-            //TODO filtrer message avec vidéos
-            //TODO filtrer message sans la réaction REACTION_MESSAGE_TO_IGNORE (choisir l'émoji)
-            //TODO garder les messages de bot pour récup les évaluations à afficher dans l'historique
-            .map(message => formatMessage(message));
+
+        const filteredMessages = await Promise.all(
+            messages.map(async (message) => {
+                return {
+                    message,
+                    shouldInclude: await filterMessage(message)
+                };
+            })
+        );
+
+        return filteredMessages
+            .filter(({ shouldInclude }) => shouldInclude)
+            .map(({ message }) => formatMessage(message));
+
     } catch (error) {
         console.error(`Error fetching messages for channel ${channelId}:`, error);
         return [];
@@ -158,4 +206,14 @@ function replyMessageOnDiscord(channelId, message, messageIdToReply) {
                 })
         })
         .catch(console.error)
+}
+
+async function addReactionToMessage(channelId, messageId, emoji) {
+    try {
+        const channel = await client.channels.fetch(channelId);
+        const message = await channel.messages.fetch(messageId);
+        message.react(emoji);
+    } catch (error) {
+        console.error('Error reacting to message:', error);
+    }
 }
