@@ -122,6 +122,7 @@ async function getUserMessages(id) {
     })
 
     await Promise.all(fetchMessagesPromises)
+    messages.sort((a, b) =>  b.createdAt - a.createdAt );
     return messages;
 }
 
