@@ -57,7 +57,6 @@ function formatMessage(messageDiscord) {
     messageDiscord.attachments.forEach(attachment => {
         attachments.push(attachment.url)
     })
-    console.log(attachments)
 
     let links = []
     messageDiscord.embeds.forEach(embed => {

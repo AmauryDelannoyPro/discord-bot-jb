@@ -23,32 +23,8 @@ async function getUsers() {
     return users
 }
 
-async function getUsersByRecentMessages(recentFirst) {
-    const userRecentMessageDates = [];
-    const users = await getUsers()
-    for (const user of users) {
-        const userId = user.id
-        let mostRecentDate = 0;
-        const messages = await getUserMessages(userId) //TODO Promise.all()
-        if (messages.length > 0) {
-            for (const message of messages) {
-                const messageDate = new Date(message.createdAt).getTime()
-                if (messageDate > mostRecentDate) {
-                    mostRecentDate = messageDate;
-                }
-            }
-        }
-        if (mostRecentDate > 0) {
-            userRecentMessageDates.push({ user, mostRecentDate });
-        }
-    }
-
-    // TODO ADEL Tri user OK Mais les messages entre eux ne sont pas triés dans l'ordre
-    // Reprise ici
-
-    userRecentMessageDates.sort((a, b) => b.mostRecentDate - a.mostRecentDate);
-
-    return userRecentMessageDates.map(entry => entry.user);
+async function getUsersByRecentMessages(recentFirst = true) {
+    return redis.getUsersByRecentMessages(recentFirst)
 }
 // endregion user
 
