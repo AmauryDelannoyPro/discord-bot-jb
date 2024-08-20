@@ -57,6 +57,7 @@ function formatMessage(messageDiscord) {
     messageDiscord.attachments.forEach(attachment => {
         attachments.push(attachment.url)
     })
+    console.log(attachments)
 
     let links = []
     messageDiscord.embeds.forEach(embed => {
@@ -84,6 +85,7 @@ function formatUser(userDiscord) {
 }
 
 async function filterMessage(messageDiscord) {
+    return true
     // Filter JBOT's messages : keep messages post by JBOT (it's an evaluation)
     if (messageDiscord.author.username === BOT_NAME) {
         return true
