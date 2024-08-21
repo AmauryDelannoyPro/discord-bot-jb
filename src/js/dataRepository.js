@@ -4,6 +4,7 @@ module.exports = {
     replyMessageOnDiscord,
     init,
     saveMessage,
+    getUsersByRecentMessages,
 };
 
 const redis = require("./redis")
@@ -12,7 +13,7 @@ const utils = require("./utils")
 
 
 // region user
-async function fetchDiscordUsers(){
+async function fetchDiscordUsers() {
     const discordUsers = await discord.getUsers()
     await redis.saveUsers(discordUsers)
 }
@@ -21,11 +22,15 @@ async function getUsers() {
     const users = await redis.getUsers()
     return users
 }
+
+async function getUsersByRecentMessages(recentFirst = true) {
+    return redis.getUsersByRecentMessages(recentFirst)
+}
 // endregion user
 
 
 // region message
-async function fetchDiscordMessages(){
+async function fetchDiscordMessages() {
     const discordMessages = await discord.getChannelMessages(process.env.CHANNELS_LISTENED.split(','))
     await redis.saveMessages(discordMessages)
 }
@@ -35,7 +40,7 @@ async function getUserMessages(userId) {
     return userMessages
 }
 
-async function saveMessage(message){
+async function saveMessage(message) {
     redis.saveMessages([message])
 }
 
@@ -49,7 +54,7 @@ function replyMessageOnDiscord(channelId, message, messageIdToReply) {
 async function init() {
     console.log("Initialization datas ...")
     await Promise.all([
-        // redis.resetRedis(), // TODO Tester si Redis supporte de tout stocker. Si oui, ne pas mettre. Si non : expiration des données + clear au lancement
+        redis.resetRedis(), // TODO Tester si Redis supporte de tout stocker. Si oui, ne pas mettre. Si non : expiration des données + clear au lancement
         discord.init(),
     ])
 

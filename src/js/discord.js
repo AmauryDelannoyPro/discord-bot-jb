@@ -69,7 +69,7 @@ function formatMessage(messageDiscord) {
         channelId: messageDiscord.channelId,
         content: messageDiscord.content,
         createdAt: messageDiscord.createdTimestamp,
-        updatedAt: messageDiscord.editedTimestamp,
+        updatedAt: messageDiscord.editedTimestamp ? messageDiscord.editedTimestamp : messageDiscord.createdTimestamp,
         links: links,
         attachments: attachments
     }

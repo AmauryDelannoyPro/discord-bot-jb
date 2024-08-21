@@ -16,7 +16,7 @@ async function webserver() {
 
   // Route pour récupérer la liste des utilisateurs
   app.get('/api/get-users', (req, res) => {
-    repo.getUsers()
+    repo.getUsersByRecentMessages(true) // prévoir option pour inverser l'ordre
       .then(data => {
         res.json(data);
       })
