@@ -69,7 +69,7 @@ function formatMessage(messageDiscord) {
         channelId: messageDiscord.channelId,
         content: messageDiscord.content,
         createdAt: messageDiscord.createdTimestamp,
-        updatedAt: messageDiscord.editedTimestamp,
+        updatedAt: messageDiscord.editedTimestamp ? messageDiscord.editedTimestamp : messageDiscord.createdTimestamp,
         links: links,
         attachments: attachments
     }
@@ -84,7 +84,6 @@ function formatUser(userDiscord) {
 }
 
 async function filterMessage(messageDiscord) {
-    return true
     // Filter JBOT's messages : keep messages post by JBOT (it's an evaluation)
     if (messageDiscord.author.username === BOT_NAME) {
         return true

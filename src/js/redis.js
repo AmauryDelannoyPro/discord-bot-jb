@@ -122,7 +122,7 @@ async function getUserMessages(id) {
     })
 
     await Promise.all(fetchMessagesPromises)
-    messages.sort((a, b) =>  b.createdAt - a.createdAt );
+    messages.sort((a, b) =>  b.updatedAt - a.updatedAt );
     return messages;
 }
 
@@ -139,7 +139,7 @@ async function saveMessages(messages) {
     })
 
     for (const message of messages) {
-        const messageDate = new Date(message.createdAt).getTime();
+        const messageDate = new Date(message.updatedAt).getTime();
         const lastMessageKey = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.LAST_MESSAGE_DATE)
 
         const lastSavedDate = await client.get(lastMessageKey);
