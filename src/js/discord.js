@@ -42,7 +42,7 @@ client.on("messageUpdate", (oldMessage, newMessage) => {
 
 client.on("messageDelete", (message) => {
     console.log("onMessageDelete", message.content)
-    // TODO On s'en fout ?
+    // TODO On s'en fout ? Non, retirer de notre BDD
 })
 
 client.on("error", (err) => {
