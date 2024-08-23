@@ -1,6 +1,5 @@
 module.exports = {
     fetchMessages,
-    postMessageOnDiscord,
     replyMessageOnDiscord,
     getUsers,
     getChannelMessages,
@@ -168,29 +167,13 @@ async function getUsers() {
 }
 
 /**
- * Post a message on channel with our message
- * @deprecated Use replyMessageOnDiscord(message, messageIdToReply) instead
- * @param {string} channelId 
- * @param {*} message our answer / evaluation
- */
-function postMessageOnDiscord(channelId, message) {
-    client.channels.fetch(channelId)
-        .then(channel => {
-            channel.send(message)
-                .then(() => {
-                    utils.log("Message posté")
-                })
-        })
-        .catch(console.error)
-}
-
-/**
 * Reply to a message with our message
 * @param {string} channelId 
 * @param {*} message our answer / evaluation
 * @param {string} messageIdToReply message evaluated containing video
 */
 function replyMessageOnDiscord(channelId, message, messageIdToReply) {
+    utils.log("DISCORD start replyMessageOnDiscord()")
     client.channels.fetch(channelId)
         .then(channel => {
             channel.send(

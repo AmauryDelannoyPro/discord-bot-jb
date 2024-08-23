@@ -118,11 +118,21 @@ async function getUserMessages(id) {
 
     const fetchMessagesPromises = messageKeys.map(async (key) => {
         const message = await getRedisObject(key)
+        if (message.evaluationId) {
+            // TODO ADEL recupérer l'évaluation et remplir les champs
+        } else {
+            //TODO ADEL voir où construire le formulaire
+            message.evaluation = [
+                { label: "Rythme", notation: null, comment: "" },
+                { label: "Posture", notation: null, comment: "" },
+                { label: "Gamme", notation: null, comment: "" },
+            ]
+        }
         messages.push(message);
     })
 
     await Promise.all(fetchMessagesPromises)
-    messages.sort((a, b) =>  b.updatedAt - a.updatedAt );
+    messages.sort((a, b) => b.updatedAt - a.updatedAt);
     return messages;
 }
 
@@ -149,6 +159,8 @@ async function saveMessages(messages) {
             await client.set(lastMessageKey, messageDate);
         }
     }
+
+    //TODO ADEL Reprise ici sauvegarder les messages de JBOT avec un replyTo dans "message:msgId:evaluation"
     await Promise.all([fetchMessagesPromises, fetchUserMessagesPromises])
 }
 // endregion messages

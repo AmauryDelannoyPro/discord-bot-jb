@@ -44,9 +44,26 @@ async function saveMessage(message) {
     redis.saveMessages([message])
 }
 
-function replyMessageOnDiscord(channelId, message, messageIdToReply) {
+function formatEvaluationToPost(evaluations) {
+    const messageFormatted = evaluations
+        .filter(evaluation => evaluation.notation !== null || evaluation.comment !== "")
+        .map(evaluation => {
+            const emoji = evaluation.notation !== null
+                ? (evaluation.notation === true ? "✅" : "❌")
+                : "";
+            return `${evaluation.criteria}: ${emoji} ${evaluation.comment}`.trim();
+        })
+        .join("\n");
+
+    return messageFormatted
+}
+
+function replyMessageOnDiscord(channelId, evaluations, messageIdToReply) {
     // Don't need to call saveMessage(), we will get it with discord events
-    discord.replyMessageOnDiscord(channelId, message, messageIdToReply)
+    const message = formatEvaluationToPost(evaluations)
+    if (message !== ""){
+        discord.replyMessageOnDiscord(channelId, message, messageIdToReply)
+    }
 }
 // endregion message
 
@@ -54,15 +71,15 @@ function replyMessageOnDiscord(channelId, message, messageIdToReply) {
 async function init() {
     console.log("Initialization datas ...")
     await Promise.all([
-        redis.resetRedis(), // TODO Tester si Redis supporte de tout stocker. Si oui, ne pas mettre. Si non : expiration des données + clear au lancement
+        // redis.resetRedis(), // TODO Tester si Redis supporte de tout stocker. Si oui, ne pas mettre. Si non : expiration des données + clear au lancement
         discord.init(),
     ])
 
     // Peut-être retiré en phase de dev si un pull a déja été fait + bdd pas clear
-    await Promise.all([
-        fetchDiscordUsers(),
-        fetchDiscordMessages(),
-    ])
+    // await Promise.all([
+    //     fetchDiscordUsers(),
+    //     fetchDiscordMessages(),
+    // ])
 
     return new Promise((resolve) => {
         console.log("Initialization finished !\n")
