@@ -37,9 +37,10 @@ async function webserver() {
   // Route pour recevoir et loguer le message
   app.post('/api/send-message', (req, res) => {
     const evaluationInfo = req.body;
+    //TODO ADEL renvoyer le message posté sur Discord + refresh vue pour virer formulaire et mettre a la place le message discord
     res.json({ status: 'Message reçu' });
 
-    repo.replyMessageOnDiscord(evaluationInfo.channelId, evaluationInfo.evaluation, evaluationInfo.messageId)
+    repo.replyMessageOnDiscord(evaluationInfo.channelId, evaluationInfo.evaluationForm, evaluationInfo.messageId)
   });
 }
 

@@ -24,6 +24,7 @@ client.connect(); //TODO ADEL se renseigner sur multi() ?
 client.on('error', err => console.log('Redis Client Error', err));
 
 const IdConstants = {
+    EVALUATION_ID: "evaluation_id",
     LAST_MESSAGE_DATE: "last_message_date",
     MESSAGE: "message",
     MESSAGES: "messages",
@@ -114,24 +115,29 @@ async function saveUsers(users) {
 // ----- GETTERS -----
 async function getUserMessages(id) {
     const messageKeys = await client.sMembers(formatUniqueKey(IdConstants.USER, id, IdConstants.MESSAGES));
-    const messages = [];
 
     const fetchMessagesPromises = messageKeys.map(async (key) => {
-        const message = await getRedisObject(key)
-        if (message.evaluationId) {
-            // TODO ADEL recupérer l'évaluation et remplir les champs
+        const messagePromise = getRedisObject(key);
+        const evaluationIdKey = formatUniqueKey(IdConstants.MESSAGE, key.split(':')[1], IdConstants.EVALUATION_ID);
+        const evaluationIdPromise = getRedisObject(evaluationIdKey);
+    
+        const [message, evaluationId] = await Promise.all([messagePromise, evaluationIdPromise]);
+    
+        if (evaluationId !== null) {
+            const evaluationMessage = await getRedisObject(formatUniqueKey(IdConstants.MESSAGE, evaluationId));
+            message.evaluationDone = evaluationMessage.content;
         } else {
-            //TODO ADEL voir où construire le formulaire
-            message.evaluation = [
+            //TODO ADEL on laisse ça la ?
+            message.evaluationForm = [
                 { label: "Rythme", notation: null, comment: "" },
                 { label: "Posture", notation: null, comment: "" },
                 { label: "Gamme", notation: null, comment: "" },
-            ]
+            ];
         }
-        messages.push(message);
-    })
-
-    await Promise.all(fetchMessagesPromises)
+        return message;
+    });
+    
+    const messages = await Promise.all(fetchMessagesPromises);
     messages.sort((a, b) => b.updatedAt - a.updatedAt);
     return messages;
 }
@@ -158,9 +164,13 @@ async function saveMessages(messages) {
         if (messageDate > lastSavedTimestamp) {
             await client.set(lastMessageKey, messageDate);
         }
-    }
 
-    //TODO ADEL Reprise ici sauvegarder les messages de JBOT avec un replyTo dans "message:msgId:evaluation"
+        if (message.authorName === process.env.DISCORD_BOT_NAME && message.replyTo !== null){
+            const key = formatUniqueKey(IdConstants.MESSAGE, message.replyTo, IdConstants.EVALUATION_ID);
+            saveRedisObject(key, message.id)
+        }
+    }
+    
     await Promise.all([fetchMessagesPromises, fetchUserMessagesPromises])
 }
 // endregion messages

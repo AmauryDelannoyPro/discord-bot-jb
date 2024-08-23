@@ -21,7 +21,7 @@ const client = new Discord.Client({
 });
 
 const REACTION_MESSAGE_TO_IGNORE = "🔕" //TODO fonctionne sur tous les OS ?
-const BOT_NAME = "JBot" // used when filtering bot messages
+const BOT_NAME = process.env.DISCORD_BOT_NAME // used when filtering bot messages
 const WEBSITE_DOMAIN_UPLOADED_VIDEO = ["youtube", "vimeo", "dailymotion"]
 
 async function init() {
@@ -65,12 +65,14 @@ function formatMessage(messageDiscord) {
     return {
         id: messageDiscord.id,
         authorId: messageDiscord.author.id,
+        authorName: messageDiscord.author.username,
         channelId: messageDiscord.channelId,
         content: messageDiscord.content,
         createdAt: messageDiscord.createdTimestamp,
         updatedAt: messageDiscord.editedTimestamp ? messageDiscord.editedTimestamp : messageDiscord.createdTimestamp,
         links: links,
-        attachments: attachments
+        attachments: attachments,
+        replyTo: messageDiscord.reference?.messageId || null
     }
 }
 
