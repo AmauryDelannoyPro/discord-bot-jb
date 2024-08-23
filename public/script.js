@@ -132,6 +132,7 @@ function formatUserMessagesInfo(messages) {
             });
 
             // TODO ADEL ajouter un bouton "ignorer ce message"
+            // TODO ADEL onclick désactiver bouton d'envoi pour éviter spam
             const submitButton = document.createElement('button');
             submitButton.textContent = 'Submit Evaluation';
             submitButton.addEventListener('click', async () => {
@@ -160,6 +161,17 @@ function formatUserMessagesInfo(messages) {
                         },
                         body: JSON.stringify(payload)
                     });
+
+                    const responseBody = await response.json();
+                    const postedMessage = responseBody.messageResponse
+                    
+                    if (response.ok) {
+                        evaluationDiv.innerHTML = postedMessage.replace(/\n/g, '<br>');
+                        container.appendChild(evaluationDiv);
+                    } else {
+                        alert(postedMessage);
+                        // TODO ADEL réactiver bouton d'envoi
+                    }
 
                 } catch (error) {
                     console.error('Error submitting evaluation:', error);

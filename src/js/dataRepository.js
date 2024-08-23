@@ -63,6 +63,9 @@ function replyMessageOnDiscord(channelId, evaluations, messageIdToReply) {
     const message = formatEvaluationToPost(evaluations)
     if (message !== ""){
         discord.replyMessageOnDiscord(channelId, message, messageIdToReply)
+        return message
+    } else {
+        return null
     }
 }
 // endregion message
