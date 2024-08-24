@@ -1,14 +1,7 @@
-module.exports = {
-    getUsers,
-    getUserMessages,
-    saveUsers,
-    saveMessages,
-    resetRedis,
-    getUsersByRecentMessages,
-};
-
-const utils = require("./utils")
 const redis = require('redis');
+const messageAdapter = require('../utils/messageAdapter')
+
+
 const redisUrl = process.env.REDIS_URL;
 const redisPort = process.env.REDIS_PORT;
 
@@ -127,12 +120,7 @@ async function getUserMessages(id) {
             const evaluationMessage = await getRedisObject(formatUniqueKey(IdConstants.MESSAGE, evaluationId));
             message.evaluationDone = evaluationMessage.content;
         } else {
-            //TODO ADEL on laisse ça la ?
-            message.evaluationForm = [
-                { label: "Rythme", notation: null, comment: "" },
-                { label: "Posture", notation: null, comment: "" },
-                { label: "Gamme", notation: null, comment: "" },
-            ];
+            message.evaluationForm = messageAdapter.createEmptyEvaluationForm();
         }
         return message;
     });
@@ -176,24 +164,11 @@ async function saveMessages(messages) {
 // endregion messages
 
 
-/**
- * Peut servir pour debug
- */
-async function main() {
-    // initDataSet()
-
-    // const id = "user3"
-    // const messagesUser = await getUserMessages(id)
-    // const user = await getRedisObject(formatUniqueKey(IdConstants.USER, id))
-
-    // console.log(user)
-    // console.log(messagesUser)
-
-    // const users = await getUsers()
-    // console.log(users)
-
-    // client.quit()
-}
-
-// resetRedis()
-// main()
+module.exports = {
+    getUsers,
+    getUserMessages,
+    saveUsers,
+    saveMessages,
+    resetRedis,
+    getUsersByRecentMessages,
+};
