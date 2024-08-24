@@ -1,15 +1,10 @@
-module.exports = {
-    fetchMessages,
-    replyMessageOnDiscord,
-    getUsers,
-    getChannelMessages,
-    init,
-};
-
 const Discord = require('discord.js')
-const utils = require("./utils")
-const repo = require("./dataRepository")
+const utils = require("../utils/utils")
+const redis = require("./redis")
+const messageAdapter = require("../utils/messageAdapter")
+const userAdapter = require("../utils/userAdapter")
 const serverId = process.env.DISCORD_SERVER_ID
+
 
 const client = new Discord.Client({
     intents: [
@@ -20,71 +15,40 @@ const client = new Discord.Client({
     ]
 });
 
+
 const REACTION_MESSAGE_TO_IGNORE = "🔕" //TODO fonctionne sur tous les OS ?
 const BOT_NAME = process.env.DISCORD_BOT_NAME // used when filtering bot messages
 const WEBSITE_DOMAIN_UPLOADED_VIDEO = ["youtube", "vimeo", "dailymotion"]
 
-async function init() {
+
+const init = async () => {
     await client.login(process.env.DISCORD_BOT_TOKEN)
-    console.log("Discord connected !")
+    utils.log("Discord connected !")
 }
 
+
 client.on("messageCreate", (message) => {
-    console.log("onMessageCreate", message.content)
-    repo.saveMessage(formatMessage(message))
+    utils.log("onMessageCreate", message.content)
+    redis.saveMessages([messageAdapter.fromDiscordToRedisMessage(message)])
 })
 
 client.on("messageUpdate", (oldMessage, newMessage) => {
     const msg = "'" + oldMessage.content + "' devient '" + newMessage.content + "'"
-    console.log("onMessageUpdate", msg)
-    repo.saveMessage(formatMessage(newMessage))
+    utils.log("onMessageUpdate", msg)
+    redis.saveMessages([messageAdapter.fromDiscordToRedisMessage(newMessage)])
 })
 
 client.on("messageDelete", (message) => {
-    console.log("onMessageDelete", message.content)
+    utils.log("onMessageDelete", message.content)
     // TODO On s'en fout ? Non, retirer de notre BDD
 })
 
 client.on("error", (err) => {
-    console.err(err)
+    utils.err(err)
 })
 
 
-// region utils
-function formatMessage(messageDiscord) {
-    let attachments = []
-    messageDiscord.attachments.forEach(attachment => {
-        attachments.push(attachment.url)
-    })
-
-    let links = []
-    messageDiscord.embeds.forEach(embed => {
-        links.push(embed.url)
-    })
-
-    return {
-        id: messageDiscord.id,
-        authorId: messageDiscord.author.id,
-        authorName: messageDiscord.author.username,
-        channelId: messageDiscord.channelId,
-        content: messageDiscord.content,
-        createdAt: messageDiscord.createdTimestamp,
-        updatedAt: messageDiscord.editedTimestamp ? messageDiscord.editedTimestamp : messageDiscord.createdTimestamp,
-        links: links,
-        attachments: attachments,
-        replyTo: messageDiscord.reference?.messageId || null
-    }
-}
-
-function formatUser(userDiscord) {
-    return {
-        id: userDiscord.user.id,
-        name: userDiscord.user.globalName,
-        avatar: userDiscord.user.displayAvatarURL()
-    }
-}
-
-async function filterMessage(messageDiscord) {
+const filterMessage = async (messageDiscord) => {
     // Filter JBOT's messages : keep messages post by JBOT (it's an evaluation)
     if (messageDiscord.author.username === BOT_NAME) {
         return true
@@ -106,16 +70,13 @@ async function filterMessage(messageDiscord) {
 
     return isAttachment || isEmbed
 }
-// endregion utils
 
 
-async function fetchMessages(channelId) {
+const fetchMessages = async (channelId) => {
     utils.log("DISCORD start fetchMessages(" + channelId + ")");
-
     try {
         const channel = await client.channels.fetch(channelId);
         const messages = await channel.messages.fetch();
-
         const filteredMessages = await Promise.all(
             messages.map(async (message) => {
                 return {
@@ -127,7 +88,7 @@ async function fetchMessages(channelId) {
 
         return filteredMessages
             .filter(({ shouldInclude }) => shouldInclude)
-            .map(({ message }) => formatMessage(message));
+            .map(({ message }) => messageAdapter.fromDiscordToRedisMessage(message));
 
     } catch (error) {
         console.error(`Error fetching messages for channel ${channelId}:`, error);
@@ -135,7 +96,8 @@ async function fetchMessages(channelId) {
     }
 }
 
-async function getChannelMessages(channelIdList) {
+
+const getChannelMessages = async (channelIdList) => {
     let allMessages = []
 
     const fetchPromises = channelIdList.map(channelId => {
@@ -154,27 +116,23 @@ async function getChannelMessages(channelIdList) {
     return allMessages
 }
 
-async function getUsers() {
-    utils.log("DISCORD start getUsers()")
+
+const fetchUsers = async () => {
+    utils.log("DISCORD start fetchUsers()")
     try {
         const guild = await client.guilds.fetch(serverId);
         const members = await guild.members.fetch();
 
         return members
             .filter(member => !member.user.bot)
-            .map(member => formatUser(member))
+            .map(member => userAdapter.fromDiscordToRedisUser(member))
     } catch (error) {
         console.error(error);
+        return [];
     }
 }
 
-/**
-* Reply to a message with our message
-* @param {string} channelId 
-* @param {*} message our answer / evaluation
-* @param {string} messageIdToReply message evaluated containing video
-*/
-function replyMessageOnDiscord(channelId, message, messageIdToReply) {
+const replyMessageOnDiscord = (channelId, message, messageIdToReply) => {
     utils.log("DISCORD start replyMessageOnDiscord()")
     client.channels.fetch(channelId)
         .then(channel => {
@@ -193,7 +151,8 @@ function replyMessageOnDiscord(channelId, message, messageIdToReply) {
         .catch(console.error)
 }
 
-async function addReactionToMessage(channelId, messageId, emoji) {
+
+const addReactionToMessage = async (channelId, messageId, emoji) => {
     try {
         const channel = await client.channels.fetch(channelId);
         const message = await channel.messages.fetch(messageId);
@@ -202,3 +161,13 @@ async function addReactionToMessage(channelId, messageId, emoji) {
         console.error('Error reacting to message:', error);
     }
 }
+
+
+module.exports = {
+    fetchMessages,
+    replyMessageOnDiscord,
+    fetchUsers,
+    getChannelMessages,
+    init,
+    addReactionToMessage,
+};
