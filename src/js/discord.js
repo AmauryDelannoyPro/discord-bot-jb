@@ -1,6 +1,5 @@
 module.exports = {
     fetchMessages,
-    postMessageOnDiscord,
     replyMessageOnDiscord,
     getUsers,
     getChannelMessages,
@@ -22,7 +21,7 @@ const client = new Discord.Client({
 });
 
 const REACTION_MESSAGE_TO_IGNORE = "🔕" //TODO fonctionne sur tous les OS ?
-const BOT_NAME = "JBot" // used when filtering bot messages
+const BOT_NAME = process.env.DISCORD_BOT_NAME // used when filtering bot messages
 const WEBSITE_DOMAIN_UPLOADED_VIDEO = ["youtube", "vimeo", "dailymotion"]
 
 async function init() {
@@ -43,7 +42,7 @@ client.on("messageUpdate", (oldMessage, newMessage) => {
 
 client.on("messageDelete", (message) => {
     console.log("onMessageDelete", message.content)
-    // TODO On s'en fout ?
+    // TODO On s'en fout ? Non, retirer de notre BDD
 })
 
 client.on("error", (err) => {
@@ -66,12 +65,14 @@ function formatMessage(messageDiscord) {
     return {
         id: messageDiscord.id,
         authorId: messageDiscord.author.id,
+        authorName: messageDiscord.author.username,
         channelId: messageDiscord.channelId,
         content: messageDiscord.content,
         createdAt: messageDiscord.createdTimestamp,
         updatedAt: messageDiscord.editedTimestamp ? messageDiscord.editedTimestamp : messageDiscord.createdTimestamp,
         links: links,
-        attachments: attachments
+        attachments: attachments,
+        replyTo: messageDiscord.reference?.messageId || null
     }
 }
 
@@ -168,29 +169,13 @@ async function getUsers() {
 }
 
 /**
- * Post a message on channel with our message
- * @deprecated Use replyMessageOnDiscord(message, messageIdToReply) instead
- * @param {string} channelId 
- * @param {*} message our answer / evaluation
- */
-function postMessageOnDiscord(channelId, message) {
-    client.channels.fetch(channelId)
-        .then(channel => {
-            channel.send(message)
-                .then(() => {
-                    utils.log("Message posté")
-                })
-        })
-        .catch(console.error)
-}
-
-/**
 * Reply to a message with our message
 * @param {string} channelId 
 * @param {*} message our answer / evaluation
 * @param {string} messageIdToReply message evaluated containing video
 */
 function replyMessageOnDiscord(channelId, message, messageIdToReply) {
+    utils.log("DISCORD start replyMessageOnDiscord()")
     client.channels.fetch(channelId)
         .then(channel => {
             channel.send(

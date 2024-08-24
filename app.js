@@ -36,10 +36,13 @@ async function webserver() {
 
   // Route pour recevoir et loguer le message
   app.post('/api/send-message', (req, res) => {
-    const messageToPost = req.body.message;
-    res.json({ status: 'Message reçu' });
-
-    repo.replyMessageOnDiscord("1262684763085475860", messageToPost, "1267872280072163430") //TODO 
+    const evaluationInfo = req.body;
+    const response = repo.replyMessageOnDiscord(evaluationInfo.channelId, evaluationInfo.evaluationForm, evaluationInfo.messageId)
+    if (response === null) {
+      res.status(400).json({ messageResponse: 'Message is empty, please fill form.' });
+    } else {
+      res.status(200).json({ messageResponse: response })
+    }
   });
 }
 

@@ -44,9 +44,29 @@ async function saveMessage(message) {
     redis.saveMessages([message])
 }
 
-function replyMessageOnDiscord(channelId, message, messageIdToReply) {
+function formatEvaluationToPost(evaluations) {
+    const messageFormatted = evaluations
+        .filter(evaluation => evaluation.notation !== null || evaluation.comment !== "")
+        .map(evaluation => {
+            const emoji = evaluation.notation !== null
+                ? (evaluation.notation === true ? "✅" : "❌")
+                : "";
+            return `${evaluation.criteria}: ${emoji} ${evaluation.comment}`.trim();
+        })
+        .join("\n");
+
+    return messageFormatted
+}
+
+function replyMessageOnDiscord(channelId, evaluations, messageIdToReply) {
     // Don't need to call saveMessage(), we will get it with discord events
-    discord.replyMessageOnDiscord(channelId, message, messageIdToReply)
+    const message = formatEvaluationToPost(evaluations)
+    if (message !== ""){
+        discord.replyMessageOnDiscord(channelId, message, messageIdToReply)
+        return message
+    } else {
+        return null
+    }
 }
 // endregion message
 
