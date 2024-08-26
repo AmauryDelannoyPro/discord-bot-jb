@@ -131,7 +131,37 @@ function formatUserMessagesInfo(messages) {
                 evaluationDiv.appendChild(criteriaRow);
             });
 
-            // TODO ADEL ajouter un bouton "ignorer ce message"
+            // Button ignorer message
+            const ignoreButton = document.createElement('button');
+            ignoreButton.textContent = 'Ignorer ce message à l\'avenir';
+            ignoreButton.addEventListener('click', async () => {
+                ignoreButton.style.display = 'none';
+
+                try {
+                    const response = await fetch('/api/ignore-message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ messageId: message.id, channelId: message.channelId })
+                    });
+
+                    if (response.ok) {
+                        evaluationDiv.innerHTML = "Le message sera masqué à l'avenir";
+                    } else {
+                        evaluationDiv.innerHTML = "Un problème est survenue, le message sera toujours visible";
+                    }
+                    
+                    container.appendChild(evaluationDiv);
+
+                } catch (error) {
+                    console.error('Error performing other action:', error);
+                    ignoreButton.disabled = false;
+                }
+            });
+            evaluationDiv.appendChild(ignoreButton);
+
+            // Bouton envoi formulaire
             const submitButton = document.createElement('button');
             submitButton.textContent = 'Submit Evaluation';
             submitButton.addEventListener('click', async () => {
@@ -164,7 +194,7 @@ function formatUserMessagesInfo(messages) {
 
                     const responseBody = await response.json();
                     const postedMessage = responseBody.messageResponse
-                    
+
                     if (response.ok) {
                         evaluationDiv.innerHTML = postedMessage.replace(/\n/g, '<br>');
                         container.appendChild(evaluationDiv);

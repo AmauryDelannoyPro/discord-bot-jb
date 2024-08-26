@@ -17,7 +17,6 @@ const getUserMessages = async (req, res) => {
 
 const postEvaluation = async (req, res) => {
     try {
-        console.log("envoi evaluation start")
         const evaluationInfo = req.body;
         const response = await messageRepository.replyMessageOnDiscord(evaluationInfo.channelId, evaluationInfo.evaluationForm, evaluationInfo.messageId)
         if (!response) {
@@ -32,7 +31,19 @@ const postEvaluation = async (req, res) => {
 };
 
 
+const ignoreMessage = async (req, res) => {
+    try {
+        const body = req.body;
+        messageRepository.ignoreMessage(body.channelId, body.messageId)
+        res.status(200).json();
+    } catch (error) {
+        res.status(500).json({ status: 'Internal server error' });
+    }
+};
+
+
 module.exports = {
     getUserMessages,
-    postEvaluation
+    postEvaluation,
+    ignoreMessage
 }

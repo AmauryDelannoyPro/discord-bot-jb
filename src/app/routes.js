@@ -12,4 +12,7 @@ router.get('/get-user-messages', messageController.getUserMessages);
 // Route pour poster l'évaluation
 router.post('/send-message', messageController.postEvaluation);
 
+// Route pour poster l'évaluation
+router.post('/ignore-message', messageController.ignoreMessage);
+
 module.exports = router;

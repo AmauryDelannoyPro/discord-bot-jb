@@ -11,7 +11,7 @@ const saveMessage = async (message) => {
     redis.saveMessages([message])
 }
 
-
+//TODO ADEL bouger dans messageAdapter
 const formatEvaluationToPost = async (evaluations) => {
     const messageFormatted = evaluations
         .filter(evaluation => evaluation.notation !== null || evaluation.comment !== "")
@@ -39,8 +39,15 @@ const replyMessageOnDiscord = async (channelId, evaluations, messageIdToReply) =
 }
 
 
+const ignoreMessage = async (channelId, messageId) => {
+    redis.deleteMessage(messageId)
+    discord.addReactionToMessage(channelId, messageId)
+}
+
+
 module.exports = {
     getUserMessages,
     replyMessageOnDiscord,
     saveMessage,
+    ignoreMessage
 };

@@ -45,6 +45,10 @@ body {
     text-align: center;
 }
 
+.evaluationContent button {
+    margin: 0 10px;
+}
+
 .criteriaRow {
     margin-bottom: 5px;
     display: flex;

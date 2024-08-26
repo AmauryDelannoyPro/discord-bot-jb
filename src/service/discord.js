@@ -75,6 +75,7 @@ const filterMessage = async (messageDiscord) => {
 const fetchMessages = async (channelId) => {
     utils.log("DISCORD start fetchMessages(" + channelId + ")");
     try {
+        //TODO Mettre une limite (date ? Nb message ?) pour pas pull tous les messages depuis la création du channel
         const channel = await client.channels.fetch(channelId);
         const messages = await channel.messages.fetch();
         const filteredMessages = await Promise.all(
@@ -152,7 +153,7 @@ const replyMessageOnDiscord = (channelId, message, messageIdToReply) => {
 }
 
 
-const addReactionToMessage = async (channelId, messageId, emoji) => {
+const addReactionToMessage = async (channelId, messageId, emoji = REACTION_MESSAGE_TO_IGNORE) => {
     try {
         const channel = await client.channels.fetch(channelId);
         const message = await channel.messages.fetch(messageId);

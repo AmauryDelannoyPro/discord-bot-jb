@@ -143,6 +143,7 @@ async function saveMessages(messages) {
     })
 
     for (const message of messages) {
+        // TODO ADEL reprise exporter ce code pour récup dernier message après uen suppression
         const messageDate = new Date(message.updatedAt).getTime();
         const lastMessageKey = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.LAST_MESSAGE_DATE)
 
@@ -153,6 +154,7 @@ async function saveMessages(messages) {
             await client.set(lastMessageKey, messageDate);
         }
 
+        // Save evaluation already done
         if (message.authorName === process.env.DISCORD_BOT_NAME && message.replyTo !== null){
             const key = formatUniqueKey(IdConstants.MESSAGE, message.replyTo, IdConstants.EVALUATION_ID);
             saveRedisObject(key, message.id)
@@ -160,6 +162,27 @@ async function saveMessages(messages) {
     }
     
     await Promise.all([fetchMessagesPromises, fetchUserMessagesPromises])
+}
+
+
+async function deleteMessage(messageId){
+    deleteMessages([messageId])
+}
+
+
+async function deleteMessages(messageIds){
+    //TODO ADEL
+    /*
+    const key = formatUniqueKey(IdConstants.MESSAGE, message.id);
+
+    user messages
+    const key = formatUniqueKey(IdConstants.MESSAGE, message.id);
+        const keyMessages = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.MESSAGES);
+        client.sAdd(keyMessages, key)
+
+    dernier message
+    const lastMessageKey = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.LAST_MESSAGE_DATE)
+    */
 }
 // endregion messages
 
@@ -171,4 +194,6 @@ module.exports = {
     saveMessages,
     resetRedis,
     getUsersByRecentMessages,
+    deleteMessage,
+    deleteMessages,
 };
