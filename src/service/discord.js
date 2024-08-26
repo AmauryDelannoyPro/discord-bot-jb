@@ -40,7 +40,7 @@ client.on("messageUpdate", (oldMessage, newMessage) => {
 
 client.on("messageDelete", (message) => {
     utils.log("onMessageDelete", message.content)
-    // TODO On s'en fout ? Non, retirer de notre BDD
+    redis.deleteMessage(message.id)
 })
 
 client.on("error", (err) => {

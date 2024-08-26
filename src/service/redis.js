@@ -47,6 +47,11 @@ async function getRedisObject(objectId) {
     return JSON.parse(data);
 }
 
+async function deleteRedisObject(objectId) {
+    await client.del(objectId);
+    return
+}
+
 
 // region user
 // ----- GETTERs -----
@@ -106,16 +111,16 @@ async function saveUsers(users) {
 
 // region messages
 // ----- GETTERS -----
-async function getUserMessages(id) {
-    const messageKeys = await client.sMembers(formatUniqueKey(IdConstants.USER, id, IdConstants.MESSAGES));
+async function getUserMessages(userId) {
+    const messageKeys = await client.sMembers(formatUniqueKey(IdConstants.USER, userId, IdConstants.MESSAGES));
 
     const fetchMessagesPromises = messageKeys.map(async (key) => {
         const messagePromise = getRedisObject(key);
         const evaluationIdKey = formatUniqueKey(IdConstants.MESSAGE, key.split(':')[1], IdConstants.EVALUATION_ID);
         const evaluationIdPromise = getRedisObject(evaluationIdKey);
-    
+
         const [message, evaluationId] = await Promise.all([messagePromise, evaluationIdPromise]);
-    
+
         if (evaluationId !== null) {
             const evaluationMessage = await getRedisObject(formatUniqueKey(IdConstants.MESSAGE, evaluationId));
             message.evaluationDone = evaluationMessage.content;
@@ -124,7 +129,7 @@ async function getUserMessages(id) {
         }
         return message;
     });
-    
+
     const messages = await Promise.all(fetchMessagesPromises);
     messages.sort((a, b) => b.updatedAt - a.updatedAt);
     return messages;
@@ -143,46 +148,62 @@ async function saveMessages(messages) {
     })
 
     for (const message of messages) {
-        // TODO ADEL reprise exporter ce code pour récup dernier message après uen suppression
-        const messageDate = new Date(message.updatedAt).getTime();
-        const lastMessageKey = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.LAST_MESSAGE_DATE)
-
-        const lastSavedDate = await client.get(lastMessageKey);
-        const lastSavedTimestamp = lastSavedDate ? parseInt(lastSavedDate) : 0;
-
-        if (messageDate > lastSavedTimestamp) {
-            await client.set(lastMessageKey, messageDate);
-        }
+        await setLastMessage(message)
 
         // Save evaluation already done
-        if (message.authorName === process.env.DISCORD_BOT_NAME && message.replyTo !== null){
+        if (message.authorName === process.env.DISCORD_BOT_NAME && message.replyTo !== null) {
             const key = formatUniqueKey(IdConstants.MESSAGE, message.replyTo, IdConstants.EVALUATION_ID);
             saveRedisObject(key, message.id)
         }
     }
-    
+
     await Promise.all([fetchMessagesPromises, fetchUserMessagesPromises])
 }
 
 
-async function deleteMessage(messageId){
+async function setLastMessage(message, force = false) {
+    const messageDate = new Date(message.updatedAt).getTime();
+    const lastMessageKey = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.LAST_MESSAGE_DATE)
+
+    const lastSavedDate = await client.get(lastMessageKey);
+    const lastSavedTimestamp = lastSavedDate ? parseInt(lastSavedDate) : 0;
+
+    if (force || messageDate > lastSavedTimestamp) {
+        await client.set(lastMessageKey, messageDate);
+    }
+}
+
+
+async function deleteMessage(messageId) {
     deleteMessages([messageId])
 }
 
 
-async function deleteMessages(messageIds){
-    //TODO ADEL
-    /*
-    const key = formatUniqueKey(IdConstants.MESSAGE, message.id);
+async function deleteMessages(messageIds) {
+    for (const messageId of messageIds) {
+        const messageKey = formatUniqueKey(IdConstants.MESSAGE, messageId);
+        const message = await getRedisObject(messageKey)
 
-    user messages
-    const key = formatUniqueKey(IdConstants.MESSAGE, message.id);
-        const keyMessages = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.MESSAGES);
-        client.sAdd(keyMessages, key)
+        // Delete message
+        await deleteRedisObject(messageKey)
 
-    dernier message
-    const lastMessageKey = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.LAST_MESSAGE_DATE)
-    */
+        // User's message (to get his/her message list)
+        const userMessagesKey = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.MESSAGES);
+        await client.sRem(userMessagesKey, messageKey)
+
+        // Last message (to sort user by last message sent)
+        const lastMessageKey = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.LAST_MESSAGE_DATE)
+        const lastSavedDate = await client.get(lastMessageKey);
+
+        if (message.updatedAt == lastSavedDate) {
+            // Save new last message of user
+            const userMessages = await getUserMessages(message.authorId)
+            if (userMessages.length > 0) {
+                const newLastMessage = userMessages[0]
+                setLastMessage(newLastMessage, true)
+            }
+        }
+    }
 }
 // endregion messages
 
