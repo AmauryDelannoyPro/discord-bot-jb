@@ -93,8 +93,7 @@ function formatUserMessagesInfo(messages) {
     container.innerHTML = '';
 
     messages.forEach((message, index) => {
-        const messageDiv = document.createElement('div');
-
+        // Message infos
         const messageInformationsDiv = document.createElement("div")
         messageInformationsDiv.className = 'messageInformationsContent';
         let sectionHtml = '';
@@ -108,12 +107,16 @@ function formatUserMessagesInfo(messages) {
             ;
         container.appendChild(messageInformationsDiv)
 
+        // Message
+        const messageDiv = document.createElement('div');
         messageDiv.className = 'messageContent';
         messageDiv.innerHTML = `${message.content}`;
         container.appendChild(messageDiv);
 
+        
         const evaluationDiv = document.createElement('div');
         evaluationDiv.className = 'evaluationContent';
+        evaluationDiv.id = `evaluation-${message.id}`; 
         // Evaluation à faire
         if (message.evaluationForm) {
             message.evaluationForm.forEach((criteria, idx) => {
@@ -181,13 +184,13 @@ function formatUserMessagesInfo(messages) {
                         body: JSON.stringify({ messageId: message.id, channelId: message.channelId })
                     });
 
+                    const divToUpdate = document.getElementById(`evaluation-${message.id}`);
                     if (response.ok) {
-                        evaluationDiv.innerHTML = "Le message sera masqué à l'avenir";
+                        divToUpdate.innerHTML = "Le message sera masqué à l'avenir";
                     } else {
-                        evaluationDiv.innerHTML = "Un problème est survenue, le message sera toujours visible";
+                        divToUpdate.innerHTML = "Un problème est survenue, le message sera toujours visible";
                     }
 
-                    container.appendChild(evaluationDiv);
 
                 } catch (error) {
                     console.error('Error performing other action:', error);
@@ -229,10 +232,10 @@ function formatUserMessagesInfo(messages) {
 
                     const responseBody = await response.json();
                     const postedMessage = responseBody.messageResponse
-
+                    
                     if (response.ok) {
-                        evaluationDiv.innerHTML = postedMessage.replace(/\n/g, '<br>');
-                        container.appendChild(evaluationDiv);
+                        const divToUpdate = document.getElementById(`evaluation-${message.id}`);
+                        divToUpdate.innerHTML = postedMessage.replace(/\n/g, '<br>');
                     } else {
                         alert(postedMessage);
                         submitButton.disabled = false;
