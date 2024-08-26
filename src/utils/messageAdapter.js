@@ -33,7 +33,23 @@ const createEmptyEvaluationForm = () => {
 }
 
 
+const formatEvaluationToPost = async (evaluations) => {
+    const messageFormatted = evaluations
+        .filter(evaluation => evaluation.notation !== null || evaluation.comment !== "")
+        .map(evaluation => {
+            const emoji = evaluation.notation !== null
+                ? (evaluation.notation === true ? "✅" : "❌")
+                : "";
+            return `${evaluation.criteria}: ${emoji} ${evaluation.comment}`.trim();
+        })
+        .join("\n");
+
+    return messageFormatted
+}
+
+
 module.exports = {
     fromDiscordToRedisMessage,
-    createEmptyEvaluationForm
+    createEmptyEvaluationForm,
+    formatEvaluationToPost,
 }

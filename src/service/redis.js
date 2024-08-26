@@ -203,6 +203,12 @@ async function deleteMessages(messageIds) {
                 setLastMessage(newLastMessage, true)
             }
         }
+
+        // Update evaluation if deleted a JBOT's message
+        if (message.authorName === process.env.DISCORD_BOT_NAME) {
+            const key = formatUniqueKey(IdConstants.MESSAGE, message.replyTo, IdConstants.EVALUATION_ID);
+            deleteRedisObject(key)
+        }
     }
 }
 // endregion messages

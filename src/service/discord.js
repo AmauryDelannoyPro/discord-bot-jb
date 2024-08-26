@@ -16,7 +16,7 @@ const client = new Discord.Client({
 });
 
 
-const REACTION_MESSAGE_TO_IGNORE = "🔕" //TODO fonctionne sur tous les OS ?
+const REACTION_MESSAGE_TO_IGNORE = "🔕"
 const BOT_NAME = process.env.DISCORD_BOT_NAME // used when filtering bot messages
 const WEBSITE_DOMAIN_UPLOADED_VIDEO = ["youtube", "vimeo", "dailymotion"]
 
