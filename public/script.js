@@ -45,7 +45,28 @@ function formatUsersInfo(users) {
     const userList = document.createElement('ul');
     users.forEach(user => {
         const userItem = document.createElement('li');
-        userItem.innerHTML = `<a href="#" onclick="loadUserMessagesContent('${user.id}')">Nom : ${user.name}</a>`;
+
+        const userLink = document.createElement('a');
+        userLink.href = '#';
+        userLink.style.display = 'flex';
+        userLink.style.alignItems = 'center';
+        userLink.onclick = () => loadUserMessagesContent(user.id);
+
+        const userAvatar = document.createElement('img');
+        userAvatar.src = user.avatar;
+        userAvatar.alt = `${user.name} Avatar`;
+        userAvatar.style.width = '40px';
+        userAvatar.style.height = '40px';
+        userAvatar.style.borderRadius = '50%';
+        userAvatar.style.marginRight = '10px';
+
+        const userNameText = document.createElement('span');
+        userNameText.textContent = user.name;
+
+        userLink.appendChild(userAvatar);
+        userLink.appendChild(userNameText);
+
+        userItem.appendChild(userLink);
         userList.appendChild(userItem);
     });
     container.appendChild(userList);
@@ -73,8 +94,22 @@ function formatUserMessagesInfo(messages) {
 
     messages.forEach((message, index) => {
         const messageDiv = document.createElement('div');
+
+        const messageInformationsDiv = document.createElement("div")
+        messageInformationsDiv.className = 'messageInformationsContent';
+        let sectionHtml = '';
+        if (message.sectionName) {
+            sectionHtml = `Section <strong>${message.sectionName}</strong><br>`;
+        }
+        messageInformationsDiv.innerHTML = `
+            ${sectionHtml}
+            Canal <strong>${message.channelName}</strong><br>
+            <em>Date du message : ${message.date}</em>`
+            ;
+        container.appendChild(messageInformationsDiv)
+
         messageDiv.className = 'messageContent';
-        messageDiv.innerHTML = `Message: ${message.content}`;
+        messageDiv.innerHTML = `${message.content}`;
         container.appendChild(messageDiv);
 
         const evaluationDiv = document.createElement('div');
@@ -151,7 +186,7 @@ function formatUserMessagesInfo(messages) {
                     } else {
                         evaluationDiv.innerHTML = "Un problème est survenue, le message sera toujours visible";
                     }
-                    
+
                     container.appendChild(evaluationDiv);
 
                 } catch (error) {

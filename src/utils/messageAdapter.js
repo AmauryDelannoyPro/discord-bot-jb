@@ -1,4 +1,6 @@
-const fromDiscordToRedisMessage = (messageDiscord) => {
+const utils = require('../utils/utils')
+
+const fromDiscordToRedisMessage = (messageDiscord, channelName, sectionName) => {
     let attachments = []
     messageDiscord.attachments.forEach(attachment => {
         attachments.push(attachment.url)
@@ -14,6 +16,8 @@ const fromDiscordToRedisMessage = (messageDiscord) => {
         authorId: messageDiscord.author.id,
         authorName: messageDiscord.author.username,
         channelId: messageDiscord.channelId,
+        channelName: channelName,
+        sectionName: sectionName,
         content: messageDiscord.content,
         createdAt: messageDiscord.createdTimestamp,
         updatedAt: messageDiscord.editedTimestamp ? messageDiscord.editedTimestamp : messageDiscord.createdTimestamp,

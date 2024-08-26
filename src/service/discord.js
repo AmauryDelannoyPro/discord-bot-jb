@@ -75,21 +75,28 @@ const filterMessage = async (messageDiscord) => {
 const fetchMessages = async (channelId) => {
     utils.log("DISCORD start fetchMessages(" + channelId + ")");
     try {
-        //TODO Mettre une limite (date ? Nb message ?) pour pas pull tous les messages depuis la création du channel
+        // L'API limite les messages par 100, on peut récupérer plus en bouclant plusieurs appels
         const channel = await client.channels.fetch(channelId);
-        const messages = await channel.messages.fetch();
-        const filteredMessages = await Promise.all(
-            messages.map(async (message) => {
-                return {
-                    message,
-                    shouldInclude: await filterMessage(message)
-                };
-            })
-        );
 
-        return filteredMessages
-            .filter(({ shouldInclude }) => shouldInclude)
-            .map(({ message }) => messageAdapter.fromDiscordToRedisMessage(message));
+        // Get section name
+        let parentChannelName = null
+        if (channel.parentId) {
+            const parentChannel = await client.channels.fetch(channel.parentId);
+            parentChannelName = parentChannel.name
+        }
+
+        const messages = await channel.messages.fetch();
+
+        const results = [];
+        for (const message of messages.values()) {
+            if (await filterMessage(message)) {
+                results.push(
+                    messageAdapter.fromDiscordToRedisMessage(message, channel.name, parentChannelName)
+                );
+            }
+        }
+
+        return results;
 
     } catch (error) {
         console.error(`Error fetching messages for channel ${channelId}:`, error);

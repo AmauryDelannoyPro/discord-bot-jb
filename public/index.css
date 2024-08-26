@@ -63,3 +63,9 @@ body {
 .criteriaRow label{
     margin: 0 15px;
 }
+
+.messageInformationsContent{
+    margin: 15px;
+    font-style: italic;
+    opacity: 0.6;
+}
