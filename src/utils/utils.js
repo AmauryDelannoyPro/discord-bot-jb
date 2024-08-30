@@ -38,9 +38,21 @@ const formatDateHumanReadable = async (input) => {
     });
 }
 
+
+const formatUrl = (input) => {
+    if (input.toLowerCase().includes("youtube")) {
+        return (input.split('&')[0]).replace("watch?v=", "embed/")
+    } else if (input.toLowerCase().includes("dailymotion")) {
+        return (input.split('&')[0]).replace("video/", "embed/video/")
+    }
+    return null
+}
+
+
 module.exports = {
     log,
     serialize,
     deserialize,
     formatDateHumanReadable,
+    formatUrl,
 };

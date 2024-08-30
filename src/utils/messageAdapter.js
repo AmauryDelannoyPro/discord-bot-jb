@@ -8,7 +8,10 @@ const fromDiscordToRedisMessage = (messageDiscord, channelName, sectionName) => 
 
     let links = []
     messageDiscord.embeds.forEach(embed => {
-        links.push(embed.url)
+        const formattedUrl = utils.formatUrl(embed.url)
+        if (formattedUrl){
+            links.push(formattedUrl)
+        }
     })
 
     return {

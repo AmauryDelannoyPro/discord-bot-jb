@@ -113,10 +113,38 @@ function formatUserMessagesInfo(messages) {
         messageDiv.innerHTML = `${message.content}`;
         container.appendChild(messageDiv);
 
-        
+        // Vidéos
+        const videosDiv = document.createElement('div');
+
+        // vidéo discord
+        if (message.attachments) {
+            const videoDiv = document.createElement('div');
+            message.attachments.forEach(link => {
+                videoDiv.className = 'videoContent';
+                videoDiv.innerHTML = `<video width="600" controls>
+                    <source src="${link}" type="video/mp4">
+                    Votre navigateur ne supporte pas la balise vidéo.
+                </video>`;
+
+                videosDiv.appendChild(videoDiv);
+            })
+        }
+
+        // vidéo externe (YT, ...)
+        if (message.links) {
+            message.links.forEach(link => {
+                const videoDiv = document.createElement('div');
+                videoDiv.className = 'videoContent';
+                videoDiv.innerHTML = `<iframe width="560" height="315" src="${link}" frameborder="0" allowfullscreen></iframe>`;
+                videosDiv.appendChild(videoDiv);
+            })
+        }
+        container.appendChild(videosDiv);
+
+        // Evaluation
         const evaluationDiv = document.createElement('div');
         evaluationDiv.className = 'evaluationContent';
-        evaluationDiv.id = `evaluation-${message.id}`; 
+        evaluationDiv.id = `evaluation-${message.id}`;
         // Evaluation à faire
         if (message.evaluationForm) {
             message.evaluationForm.forEach((criteria, idx) => {
@@ -232,7 +260,7 @@ function formatUserMessagesInfo(messages) {
 
                     const responseBody = await response.json();
                     const postedMessage = responseBody.messageResponse
-                    
+
                     if (response.ok) {
                         const divToUpdate = document.getElementById(`evaluation-${message.id}`);
                         divToUpdate.innerHTML = postedMessage.replace(/\n/g, '<br>');
