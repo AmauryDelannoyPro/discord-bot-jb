@@ -52,7 +52,7 @@ body {
 .criteriaRow {
     margin-bottom: 5px;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
 }
 
@@ -61,7 +61,12 @@ body {
 }
 
 .criteriaRow label{
-    margin: 0 15px;
+    margin: 0 5px;
+}
+
+.criteriaRow span{
+    width: 200px;
+    display: inline-block;
 }
 
 .messageInformationsContent{

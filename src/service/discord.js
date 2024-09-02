@@ -8,7 +8,6 @@ const serverId = process.env.DISCORD_SERVER_ID
 
 const client = new Discord.Client({
     intents: [
-        Discord.GatewayIntentBits.Guilds,
         Discord.GatewayIntentBits.GuildMembers,
         Discord.GatewayIntentBits.GuildMessages,
         Discord.GatewayIntentBits.MessageContent,
@@ -29,13 +28,13 @@ const init = async () => {
 
 client.on("messageCreate", (message) => {
     utils.log("onMessageCreate", message.content)
-    redis.saveMessages([messageAdapter.fromDiscordToRedisMessage(message)])
+    handleNewMessage(message)
 })
 
 client.on("messageUpdate", (oldMessage, newMessage) => {
     const msg = "'" + oldMessage.content + "' devient '" + newMessage.content + "'"
     utils.log("onMessageUpdate", msg)
-    redis.saveMessages([messageAdapter.fromDiscordToRedisMessage(newMessage)])
+    handleNewMessage(newMessage)
 })
 
 client.on("messageDelete", (message) => {
@@ -72,26 +71,30 @@ const filterMessage = async (messageDiscord) => {
 }
 
 
+const handleNewMessage = async (messageDiscord) => {
+    if (await filterMessage(messageDiscord)) {
+        const channel = await client.channels.fetch(messageDiscord.channelId);
+        const sectionName = await getSectionName(channel.parentId)
+        redis.saveMessages([messageAdapter.fromDiscordToRedisMessage(messageDiscord, channel.name, sectionName)])
+    } else {
+        redis.deleteMessage(messageDiscord.id)
+    }
+}
+
+
 const fetchMessages = async (channelId) => {
     utils.log("DISCORD start fetchMessages(" + channelId + ")");
     try {
         // L'API limite les messages par 100, on peut récupérer plus en bouclant plusieurs appels
         const channel = await client.channels.fetch(channelId);
-
-        // Get section name
-        let parentChannelName = null
-        if (channel.parentId) {
-            const parentChannel = await client.channels.fetch(channel.parentId);
-            parentChannelName = parentChannel.name
-        }
-
+        const sectionName = await getSectionName(channel.parentId)
         const messages = await channel.messages.fetch();
 
         const results = [];
         for (const message of messages.values()) {
             if (await filterMessage(message)) {
                 results.push(
-                    messageAdapter.fromDiscordToRedisMessage(message, channel.name, parentChannelName)
+                    messageAdapter.fromDiscordToRedisMessage(message, channel.name, sectionName)
                 );
             }
         }
@@ -102,6 +105,16 @@ const fetchMessages = async (channelId) => {
         console.error(`Error fetching messages for channel ${channelId}:`, error);
         return [];
     }
+}
+
+
+const getSectionName = async (channelId) => {
+    let parentChannelName = null
+    if (channelId) {
+        const parentChannel = await client.channels.fetch(channelId);
+        parentChannelName = parentChannel.name
+    }
+    return parentChannelName
 }
 
 

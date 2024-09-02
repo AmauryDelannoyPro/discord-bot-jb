@@ -9,7 +9,7 @@ const fromDiscordToRedisMessage = (messageDiscord, channelName, sectionName) => 
     let links = []
     messageDiscord.embeds.forEach(embed => {
         const formattedUrl = utils.formatUrl(embed.url)
-        if (formattedUrl){
+        if (formattedUrl) {
             links.push(formattedUrl)
         }
     })
@@ -32,11 +32,13 @@ const fromDiscordToRedisMessage = (messageDiscord, channelName, sectionName) => 
 
 
 const createEmptyEvaluationForm = () => {
-    return [
-        { label: "Rythme", notation: null, comment: "" },
-        { label: "Posture", notation: null, comment: "" },
-        { label: "Gamme", notation: null, comment: "" },
-    ]
+    const criteriasName = process.env.FORMULAIRE_CRITERES.split(",")
+    return criteriasName
+        .filter(criteria => criteria && criteria.trim())
+        .map(criteria => (
+            { label: criteria, notation: null, comment: "" }
+        ))
+        .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 

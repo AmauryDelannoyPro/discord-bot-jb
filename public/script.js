@@ -110,7 +110,7 @@ function formatUserMessagesInfo(messages) {
         // Message
         const messageDiv = document.createElement('div');
         messageDiv.className = 'messageContent';
-        messageDiv.innerHTML = `${message.content}`;
+        messageDiv.innerHTML = `${message.content.replace(/\n/g, '<br>')}`;
         container.appendChild(messageDiv);
 
         // Vidéos
@@ -145,57 +145,74 @@ function formatUserMessagesInfo(messages) {
         const evaluationDiv = document.createElement('div');
         evaluationDiv.className = 'evaluationContent';
         evaluationDiv.id = `evaluation-${message.id}`;
+
         // Evaluation à faire
         if (message.evaluationForm) {
-            message.evaluationForm.forEach((criteria, idx) => {
+            for (let i = 0; i < message.evaluationForm.length; i += 2) {
                 const criteriaRow = document.createElement('div');
                 criteriaRow.className = 'criteriaRow';
 
-                // Label
-                const criteriaText = document.createElement('span');
-                criteriaText.textContent = criteria.label;
+                for (let j = 0; j < 2; j++) {
+                    const criteriaIndex = i + j;
+                    if (criteriaIndex < message.evaluationForm.length) {
+                        const criteria = message.evaluationForm[criteriaIndex];
 
-                // Radio buttons
-                const okRadio = document.createElement('input');
-                okRadio.type = 'radio';
-                okRadio.name = `criteria_${message.id}_${idx}`;
-                okRadio.value = 'OK';
-                okRadio.checked = criteria.notation === true;
+                        // Create a container for each criterion
+                        const criteriaContainer = document.createElement('div');
+                        criteriaContainer.className = 'criteriaContainer';
 
-                const okLabel = document.createElement('label');
-                okLabel.textContent = 'OK';
-                okLabel.htmlFor = okRadio.id = `ok_${message.id}_${idx}`;
+                        // Label
+                        const criteriaText = document.createElement('span');
+                        criteriaText.textContent = criteria.label;
 
-                const koRadio = document.createElement('input');
-                koRadio.type = 'radio';
-                koRadio.name = `criteria_${message.id}_${idx}`;
-                koRadio.value = 'KO';
-                koRadio.checked = criteria.notation === false;
+                        // Radio buttons
+                        const okRadio = document.createElement('input');
+                        okRadio.type = 'radio';
+                        okRadio.name = `criteria_${message.id}_${criteriaIndex}`;
+                        okRadio.value = 'OK';
+                        okRadio.checked = criteria.notation === true;
 
-                const koLabel = document.createElement('label');
-                koLabel.textContent = 'KO';
-                koLabel.htmlFor = koRadio.id = `ko_${message.id}_${idx}`;
+                        const okLabel = document.createElement('label');
+                        okLabel.textContent = 'OK';
+                        okLabel.htmlFor = okRadio.id = `ok_${message.id}_${criteriaIndex}`;
 
-                // Champ commentaire
-                const commentLabel = document.createElement('label');
-                commentLabel.textContent = 'Commentaire:';
-                commentLabel.htmlFor = `comment_${message.id}_${idx}`;
+                        const koRadio = document.createElement('input');
+                        koRadio.type = 'radio';
+                        koRadio.name = `criteria_${message.id}_${criteriaIndex}`;
+                        koRadio.value = 'KO';
+                        koRadio.checked = criteria.notation === false;
 
-                const commentInput = document.createElement('input');
-                commentInput.type = 'text';
-                commentInput.id = `comment_${message.id}_${idx}`;
-                commentInput.value = criteria.comment || ''; // Définit la valeur du champ de saisie s'il y a déjà un commentaire
+                        const koLabel = document.createElement('label');
+                        koLabel.textContent = 'KO';
+                        koLabel.htmlFor = koRadio.id = `ko_${message.id}_${criteriaIndex}`;
 
-                criteriaRow.appendChild(criteriaText);
-                criteriaRow.appendChild(okRadio);
-                criteriaRow.appendChild(okLabel);
-                criteriaRow.appendChild(koRadio);
-                criteriaRow.appendChild(koLabel);
-                criteriaRow.appendChild(commentLabel);
-                criteriaRow.appendChild(commentInput);
+                        // Champ commentaire
+                        const commentLabel = document.createElement('label');
+                        commentLabel.textContent = 'Commentaire:';
+                        commentLabel.htmlFor = `comment_${message.id}_${criteriaIndex}`;
 
+                        const commentInput = document.createElement('input');
+                        commentInput.type = 'text';
+                        commentInput.id = `comment_${message.id}_${criteriaIndex}`;
+                        commentInput.value = criteria.comment || ''; // Définit la valeur du champ de saisie s'il y a déjà un commentaire
+
+                        // Append elements to criteriaContainer
+                        criteriaContainer.appendChild(criteriaText);
+                        criteriaContainer.appendChild(okRadio);
+                        criteriaContainer.appendChild(okLabel);
+                        criteriaContainer.appendChild(koRadio);
+                        criteriaContainer.appendChild(koLabel);
+                        criteriaContainer.appendChild(commentLabel);
+                        criteriaContainer.appendChild(commentInput);
+
+                        // Append criteriaContainer to the row
+                        criteriaRow.appendChild(criteriaContainer);
+                    }
+                }
+
+                // Append the row to the evaluationDiv
                 evaluationDiv.appendChild(criteriaRow);
-            });
+            }
 
             // Button ignorer message
             const ignoreButton = document.createElement('button');
@@ -216,9 +233,8 @@ function formatUserMessagesInfo(messages) {
                     if (response.ok) {
                         divToUpdate.innerHTML = "Le message sera masqué à l'avenir";
                     } else {
-                        divToUpdate.innerHTML = "Un problème est survenue, le message sera toujours visible";
+                        divToUpdate.innerHTML = "Un problème est survenu, le message sera toujours visible";
                     }
-
 
                 } catch (error) {
                     console.error('Error performing other action:', error);
@@ -259,7 +275,7 @@ function formatUserMessagesInfo(messages) {
                     });
 
                     const responseBody = await response.json();
-                    const postedMessage = responseBody.messageResponse
+                    const postedMessage = responseBody.messageResponse;
 
                     if (response.ok) {
                         const divToUpdate = document.getElementById(`evaluation-${message.id}`);
@@ -278,12 +294,12 @@ function formatUserMessagesInfo(messages) {
             container.appendChild(evaluationDiv);
         }
 
-        // Evaluation déja faite
+        // Evaluation déjà faite
         if (message.evaluationDone) {
             const criteriaRow = document.createElement('div');
-            criteriaRow.className = 'criteriaRow';
+            criteriaRow.className = 'evaluationDone';
 
-            const criteriaText = document.createElement('span');
+            const criteriaText = document.createElement('div');
             criteriaText.innerHTML = message.evaluationDone.replace(/\n/g, '<br>');
 
             criteriaRow.appendChild(criteriaText);
@@ -291,6 +307,7 @@ function formatUserMessagesInfo(messages) {
             evaluationDiv.appendChild(criteriaRow);
             container.appendChild(evaluationDiv);
         }
+
 
         if (index < messages.length - 1) {
             const horizontalSeparator = document.createElement('hr');
