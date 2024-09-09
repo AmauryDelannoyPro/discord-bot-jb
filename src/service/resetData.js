@@ -16,7 +16,7 @@ const fetchDiscordMessages = async () => {
 async function init() {
     console.log("Initialization datas ...")
     await Promise.all([
-        redis.resetRedis(), // TODO Tester si Redis supporte de tout stocker. Si oui, ne pas mettre. Si non : expiration des données + clear au lancement
+        // redis.resetRedis(), // TODO Tester si Redis supporte de tout stocker. Si oui, ne pas mettre. Si non : expiration des données + clear au lancement
         discord.init(),
     ])
 
