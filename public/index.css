@@ -40,35 +40,6 @@ body {
     background-color: #ddd;
 }
 
-.evaluationContent {
-    margin: 30px auto;
-    text-align: center;
-}
-
-.evaluationContent button {
-    margin: 0 10px;
-}
-
-.criteriaRow {
-    margin-bottom: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.criteriaRow input[type="text"] {
-    padding: 5px;
-}
-
-.criteriaRow label{
-    margin: 0 5px;
-}
-
-.criteriaRow span{
-    width: 200px;
-    display: inline-block;
-}
-
 .messageInformationsContent{
     margin: 15px;
     font-style: italic;
@@ -79,4 +50,110 @@ body {
     margin-top: 15px;
     display: flex;
     justify-content: center;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    /* padding: 20px; */
+}
+
+.evaluationContent {
+    max-width: 1000px;
+    margin: 10px auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.criteriasContent {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    /* margin-bottom: 20px; */
+}
+
+.label-radio-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+label {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.radios {
+    display: flex;
+    gap: 20px;
+}
+
+/* Align textarea */
+textarea {
+    resize: vertical;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    min-height: 50px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    form {
+        grid-template-columns: 1fr;
+    }
+
+    .label-radio-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .radios {
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    .button-container {
+        flex-direction: column; /* Stack buttons vertically on small screens */
+        gap: 10px;
+    }
+}
+
+/* Container for the buttons */
+.button-container {
+    display: flex;
+    justify-content: space-between; /* Place buttons side by side with space between */
+    margin-top: 20px;
+}
+
+/* Style the buttons */
+.button-container button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button[type="submit"] {
+    background-color: #4CAF50;
+    color: white;
+}
+
+button[type="reset"] {
+    background-color: #f44336;
+    color: white;
 }
