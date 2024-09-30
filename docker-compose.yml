@@ -1,0 +1,21 @@
+services:
+  # Service pour l'application Node.js
+  app:
+    build: .
+    env_file: src/conf/.${ENV}.env
+    ports:
+      - "3000:3000"  # mappe le port 3000 du conteneur au port 3000 de l'hôte
+    volumes:
+      - .:/app       # monte le répertoire de travail actuel dans le conteneur
+      - /app/node_modules  # empêche la montée en charge de node_modules depuis l'hôte
+    environment:
+      - REDIS_HOST=redis  # Redis est accessible via le nom du service 'redis'
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+
+  # Service Redis (nom a utiliser dans l'app backend pour retrouver l'url de redis)
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
