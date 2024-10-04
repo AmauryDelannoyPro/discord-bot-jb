@@ -3,9 +3,9 @@ services:
   app:
     build: 
       context: .
-      dockerfile: ./Dockerfile-dev
+      dockerfile: ./Dockerfile-prod
     ports:
-      - "3000:3000" 
+      - "80:2071" 
     volumes:
       - .:/app       # monte le répertoire de travail actuel dans le conteneur
       - /app/node_modules  # empêche la montée en charge de node_modules depuis l'hôte

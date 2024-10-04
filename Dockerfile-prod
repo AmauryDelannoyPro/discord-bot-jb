@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Étape 6 : Exposer le port utilisé par l'application (si elle écoute sur un port spécifique, ex: 3000)
-EXPOSE 3000
+EXPOSE 2071
 
 # Étape 7 : Démarrer l'application en utilisant la commande spécifiée
-CMD ["node", "--env-file=src/conf/.dev.env", "src/app/app.js"]
+CMD ["node", "--env-file=./src/conf/.prod.env", "src/app/app.js"]
