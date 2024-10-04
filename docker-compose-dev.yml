@@ -2,9 +2,8 @@ services:
   # Service pour l'application Node.js
   app:
     build: .
-    env_file: src/conf/.${ENV}.env
     ports:
-      - "3000:3000"  # mappe le port 3000 du conteneur au port 3000 de l'hôte
+      - "3000:3000" 
     volumes:
       - .:/app       # monte le répertoire de travail actuel dans le conteneur
       - /app/node_modules  # empêche la montée en charge de node_modules depuis l'hôte

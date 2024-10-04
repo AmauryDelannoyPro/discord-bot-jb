@@ -17,5 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # Étape 7 : Démarrer l'application en utilisant la commande spécifiée
-#CMD ["node", "--env-file=src/conf/.dev.env", "src/app/app.js"]
-CMD ["node", "src/app/app.js"]
+CMD ["node", "--env-file=src/conf/.dev.env", "src/app/app.js"]

@@ -12,7 +12,7 @@ async function webserver() {
   await resetService.init()
 
   app.listen(port, () => {
-    console.log(`Server start on port ${port}`)
+    console.log(`Server started`)
   })
 }
 
