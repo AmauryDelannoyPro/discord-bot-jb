@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "home.js",
   "scripts": {
+    "dev": "nodemon --inspect=0.0.0.0:9229 -L src/app/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,5 +14,8 @@
     "discord.js": "^14.15.3",
     "express": "^4.19.2",
     "redis": "^4.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }

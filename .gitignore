@@ -2,3 +2,7 @@
 node_modules/
 *.code-workspace
 *.rdb
+
+# Exclude env files except templates
+src/conf/*.env
+!src/conf/.template.env

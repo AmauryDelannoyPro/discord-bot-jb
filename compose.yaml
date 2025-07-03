@@ -1,0 +1,26 @@
+services:
+  server:
+    container_name: jbotServer
+    restart: always
+    build:
+      context: .
+      target: dev
+    env_file: src/conf/.docker.env
+    ports:
+      - 3000:3000
+      - 9229:9229
+    volumes:
+      - ./src:/usr/src/app/src
+      - ./public:/usr/src/app/public
+
+  redis:
+    container_name: jbotRedis
+    restart: always
+    image: redis:8
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/usr/share/redis/data
+
+volumes:
+  redis_data:
