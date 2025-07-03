@@ -156,7 +156,7 @@ function formatUserMessagesInfo(messages) {
 
                 // Create a container for each criterion (form-group)
                 const formGroup = document.createElement('div');
-                formGroup.className = 'form-group';
+                formGroup.className = 'form-group transcript-widget';
 
                 // Create a div for label and radios (label-radio-group)
                 const labelRadioGroup = document.createElement('div');
@@ -208,12 +208,22 @@ function formatUserMessagesInfo(messages) {
                 // Comment field
                 const commentTextarea = document.createElement('textarea');
                 commentTextarea.id = `comment_${message.id}_${i}`;
+                commentTextarea.className = 'transcription-result'
                 commentTextarea.placeholder = 'Commentaire...';
                 commentTextarea.value = criteria.comment || ''; // Set existing comment if available
+
+                // Transcript button
+                const transcriptButtonContainer = document.createElement('div');
+                transcriptButtonContainer.className = 'button-container';
+                const transcriptButton = document.createElement('button');
+                transcriptButton.textContent = '🎙️ Dicter'
+                transcriptButton.className = 'recording-button'
+                transcriptButtonContainer.appendChild(transcriptButton)
 
                 // Append label-radio-group and comment field to form-group
                 formGroup.appendChild(labelRadioGroup);
                 formGroup.appendChild(commentTextarea);
+                formGroup.appendChild(transcriptButtonContainer);
 
                 // Append form-group to the evaluationDiv
                 criteriasDiv.appendChild(formGroup);
@@ -308,6 +318,8 @@ function formatUserMessagesInfo(messages) {
             evaluationDiv.appendChild(buttonContainer);
             container.appendChild(evaluationDiv);
         }
+
+        enableSpeechRecognition();
 
         // Evaluation déjà faite
         if (message.evaluationDone) {
