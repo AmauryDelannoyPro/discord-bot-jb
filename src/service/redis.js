@@ -184,6 +184,8 @@ async function deleteMessages(messageIds) {
         const messageKey = formatUniqueKey(IdConstants.MESSAGE, messageId);
         const message = await getRedisObject(messageKey)
 
+        if(!message) continue
+
         // Delete message
         await deleteRedisObject(messageKey)
 
