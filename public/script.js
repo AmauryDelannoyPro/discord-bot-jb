@@ -322,12 +322,12 @@ function formatUserMessagesInfo(messages) {
         enableSpeechRecognition();
 
         // Evaluation déjà faite
-        if (message.evaluationDone) {
+        if (message.evaluation) {
             const criteriaRow = document.createElement('div');
             criteriaRow.className = 'evaluationDone';
 
             const criteriaText = document.createElement('div');
-            criteriaText.innerHTML = message.evaluationDone.replace(/\n/g, '<br>');
+            criteriaText.innerHTML = message.evaluation.content.replace(/\n/g, '<br>');
 
             criteriaRow.appendChild(criteriaText);
 

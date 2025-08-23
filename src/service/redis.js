@@ -123,7 +123,10 @@ async function getUserMessages(userId) {
 
         if (evaluationId !== null) {
             const evaluationMessage = await getRedisObject(formatUniqueKey(IdConstants.MESSAGE, evaluationId));
-            message.evaluationDone = evaluationMessage.content;
+            message.evaluation = {
+                id : evaluationId,
+                content : evaluationMessage.content,
+            }
         } else {
             message.evaluationForm = messageAdapter.createEmptyEvaluationForm();
         }
