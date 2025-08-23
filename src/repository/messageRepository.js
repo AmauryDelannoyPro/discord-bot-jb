@@ -8,7 +8,7 @@ const getUserMessages = async (userId) => {
     const messages = await redis.getUserMessages(userId);
 
     await Promise.all(messages.map(async (message) => {
-        message.date = await utils.formatDateHumanReadable(message.updatedAt);
+        message.date = await utils.formatDateHumanReadable(message.date);
     }));
 
     return messages;

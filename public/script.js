@@ -131,8 +131,8 @@ function formatUserMessagesInfo(messages) {
         }
 
         // vidéo externe (YT, ...)
-        if (message.links) {
-            message.links.forEach(link => {
+        if (message.embeds) {
+            message.embeds.forEach(link => {
                 const videoDiv = document.createElement('div');
                 videoDiv.className = 'videoContent';
                 videoDiv.innerHTML = `<iframe width="560" height="315" src="${link}" frameborder="0" allowfullscreen></iframe>`;

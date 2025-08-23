@@ -1,5 +1,6 @@
 const utils = require('../utils/utils')
 
+// DEPRECATED
 const fromDiscordToRedisMessage = (messageDiscord, channelName, sectionName) => {
     let attachments = []
     messageDiscord.attachments.forEach(attachment => {
@@ -26,6 +27,35 @@ const fromDiscordToRedisMessage = (messageDiscord, channelName, sectionName) => 
         updatedAt: messageDiscord.editedTimestamp ? messageDiscord.editedTimestamp : messageDiscord.createdTimestamp,
         links: links,
         attachments: attachments,
+        replyTo: messageDiscord.reference?.messageId || null
+    }
+}
+
+const fromDiscordToPupilMessage = (messageDiscord, channelName, sectionName) => {
+    let links = []
+    messageDiscord.embeds.forEach(embed => {
+        const formattedUrl = utils.formatUrl(embed.url)
+        if (formattedUrl) {
+            links.push(formattedUrl)
+        }
+    })
+    messageDiscord.attachments.forEach(attachment => {
+        links.push(attachment.url)
+    })
+
+    return {
+        id: messageDiscord.id,
+        channelId: messageDiscord.channelId,
+        author: {
+            id: messageDiscord.author.id,
+            name: messageDiscord.author.username,
+            avatar: messageDiscord.author.displayAvatarURL(),
+        },
+        channel: channelName,
+        date: messageDiscord.editedTimestamp ? messageDiscord.editedTimestamp : messageDiscord.createdTimestamp,
+        content: messageDiscord.content,
+        embeds : links,
+        evaluation : null,
         replyTo: messageDiscord.reference?.messageId || null
     }
 }
@@ -59,6 +89,7 @@ const formatEvaluationToPost = async (evaluations) => {
 
 module.exports = {
     fromDiscordToRedisMessage,
+    fromDiscordToPupilMessage,
     createEmptyEvaluationForm,
     formatEvaluationToPost,
 }
