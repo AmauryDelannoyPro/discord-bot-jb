@@ -21,9 +21,9 @@ const saveMessage = async (message) => {
 }
 
 
-const replyMessageOnDiscord = async (channelId, evaluations, messageIdToReply) => {
+const replyMessageOnDiscord = async (channelId, evaluation, messageIdToReply) => {
     // Don't need to call saveMessage(), we will get it with discord events
-    const message = await messageAdapter.formatEvaluationToPost(evaluations)
+    const message = await messageAdapter.formatEvaluationToPost(evaluation)
     if (message !== "") {
         discord.replyMessageOnDiscord(channelId, message, messageIdToReply)
         return message
@@ -39,9 +39,15 @@ const ignoreMessage = async (channelId, messageId) => {
 }
 
 
+const getCriterias = async () => {
+    const criterias = messageAdapter.createEmptyEvaluationForm();
+    return criterias;
+};
+
 module.exports = {
     getUserMessages,
     replyMessageOnDiscord,
     saveMessage,
-    ignoreMessage
+    ignoreMessage,
+    getCriterias,
 };

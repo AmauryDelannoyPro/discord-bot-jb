@@ -66,25 +66,25 @@ const createEmptyEvaluationForm = () => {
     return criteriasName
         .filter(criteria => criteria && criteria.trim())
         .map(criteria => (
-            { label: criteria, notation: null, comment: "" }
+            { label: criteria, id: "id_"+criteria.replaceAll(" ","-")}
         ))
         .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 
-const formatEvaluationToPost = async (evaluations) => {
-    const messageFormatted = evaluations
-        .filter(evaluation => evaluation.notation !== null || evaluation.comment !== "")
-        .map(evaluation => {
-            const emoji = evaluation.notation !== null
-                ? (evaluation.notation === true ? "✅" : "❌")
+const formatEvaluationToPost = async (evaluation) => {
+    const messageFormatted = Object.entries(evaluation)
+        .filter(([criteriaId, eval]) => eval.value !== null || eval.comments !== "")
+        .map(([criteriaId, eval]) => {
+            const emoji = eval.value !== null
+                ? (eval.value === true ? "✅" : "❌")
                 : "";
-            return `${evaluation.criteria}: ${emoji} ${evaluation.comment}`.trim();
+            return `${criteriaId}: ${emoji} ${eval.comments}`.trim();
         })
         .join("\n");
 
-    return messageFormatted
-}
+    return messageFormatted;
+};
 
 
 module.exports = {

@@ -127,8 +127,6 @@ async function getUserMessages(userId) {
                 id : evaluationId,
                 content : evaluationMessage.content,
             }
-        } else {
-            message.evaluationForm = messageAdapter.createEmptyEvaluationForm();
         }
         return message;
     });
@@ -155,7 +153,7 @@ async function saveMessages(messages) {
 
         // Save evaluation already done
         if (message.author.name === process.env.DISCORD_BOT_NAME && message.replyTo !== null) {
-            const key = formatUniqueKey(IdConstants.MESSAGE, message.replyTo.id, IdConstants.EVALUATION_ID);
+            const key = formatUniqueKey(IdConstants.MESSAGE, message.replyTo, IdConstants.EVALUATION_ID);
             saveRedisObject(key, message.id)
         }
     }

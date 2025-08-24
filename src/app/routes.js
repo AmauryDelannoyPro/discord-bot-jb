@@ -9,6 +9,9 @@ router.get('/get-users', userController.getUsers);
 // Route pour récupérer la liste des messages d'un utilisateur
 router.get('/get-user-messages', messageController.getUserMessages);
 
+// Route pour récupérer les critères d'évaluations
+router.get('/get-evaluation-criterias', messageController.getCriterias)
+
 // Route pour poster l'évaluation
 router.post('/send-message', messageController.postEvaluation);
 
