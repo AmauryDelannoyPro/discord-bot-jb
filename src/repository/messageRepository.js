@@ -15,6 +15,17 @@ const getUserMessages = async (userId) => {
 };
 
 
+const getNotEvaluatedMessages = async () => {
+    const messages = await redis.getMessagesToEvaluateOldestFirst();
+
+    await Promise.all(messages.map(async (message) => {
+        message.date = await utils.formatDateHumanReadable(message.date);
+    }));
+
+    return messages;
+};
+
+
 const saveMessage = async (message) => {
     redis.saveMessages([message])
 }
@@ -67,4 +78,5 @@ module.exports = {
     saveMessage,
     ignoreMessage,
     getCriterias,
+    getNotEvaluatedMessages,
 };

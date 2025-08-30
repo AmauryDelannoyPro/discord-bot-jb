@@ -137,6 +137,46 @@ async function getUserMessages(userId) {
     return messages;
 }
 
+async function getMessagesToEvaluateOldestFirst() {
+    // Fait une liste avec les évaluations et une liste des messages
+    // Puis filtre et tri les messages
+    let cursor = 0;
+    let messages = [];
+    const evaluationDone = [];
+
+    try {
+        do {
+            const scanResult = await client.scan(cursor, { MATCH: IdConstants.MESSAGE + ':*' });
+            cursor = scanResult.cursor;
+            const keys = scanResult.keys;
+
+            for (const key of keys) {
+                // Evaluations have suffix
+                if (key.startsWith(IdConstants.MESSAGE) && key.endsWith(IdConstants.EVALUATION_ID)) {
+                    const evaluatedMessageId = key.split(":")[1]
+                    evaluationDone.push(evaluatedMessageId)
+                } else {
+                    // Message with embeds elements (messages without are our bot evaluations)
+                    const msg = await getRedisObject(key);
+
+                    if (msg.embeds.length !== 0) {
+                        messages.push(msg);
+                    }
+                }
+            }
+        } while (cursor !== 0);
+    } catch (error) {
+        // Do something ...
+    }
+
+    // We filter messages with no evaluation
+    messages = messages
+        .filter(msg => !evaluationDone.includes(msg.id))
+        .sort((a, b) => a.date - b.date);
+
+    return messages;
+}
+
 // ----- SETTERS -----
 async function saveMessages(messages) {
     const fetchMessagesPromises = messages.map(message => {
@@ -298,6 +338,7 @@ function toId(str) {
 module.exports = {
     getUsers,
     getUserMessages,
+    getMessagesToEvaluateOldestFirst,
     saveUsers,
     saveMessages,
     resetRedis,

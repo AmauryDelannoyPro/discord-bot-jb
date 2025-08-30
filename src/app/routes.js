@@ -15,4 +15,7 @@ router.get('/get-evaluation-criterias', messageController.getCriterias)
 // Route pour poster l'évaluation
 router.post('/send-message', messageController.postEvaluation);
 
+// Route pour récupérer tous les messages en attente d'évaluation
+router.get('/get-not-evaluated-messages', messageController.getNotEvaluatedMessages)
+
 module.exports = router;

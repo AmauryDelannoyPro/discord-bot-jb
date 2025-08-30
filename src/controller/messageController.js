@@ -57,8 +57,23 @@ const getCriterias = async (req, res) => {
     }
 }
 
+
+const getNotEvaluatedMessages = async (req, res) => {
+    try {
+        const response = await messageRepository.getNotEvaluatedMessages()
+        if (!response) {
+            throw new Error();
+        }
+        res.status(200).json(response);
+    } catch (error) {
+        console.error('Error getting message:', error);
+        res.status(500).json({ status: 'Internal server error' });
+    }
+};
+
 module.exports = {
     getUserMessages,
     postEvaluation,
     getCriterias,
+    getNotEvaluatedMessages,
 }
