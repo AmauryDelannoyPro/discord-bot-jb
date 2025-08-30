@@ -233,7 +233,8 @@ async function getCriterias(){
 
             for (const key of keys) {
                 const criteria = await getRedisObject(key);
-                criterias.push({id: key, label: criteria});
+                const id = key.split(IdConstants.CRITERIA+":")[1]; 
+                criterias.push({id: id, label: criteria});
             }
         } while (cursor !== 0);
     } catch (error) {
@@ -257,11 +258,28 @@ async function initCriteriasFromEnv(){
     // Sauvegarde une liste de critères en base depuis ce qui est défini dans le fichier de conf
     const criteriasName = process.env.FORMULAIRE_CRITERES.split(",")
     for (const criteria of criteriasName){
-        const id = toId(criteria)
-        const key = formatUniqueKey(IdConstants.CRITERIA, id);
-
-        await saveRedisObject(key, criteria)
+        await addCriteria(criteria)
     }
+}
+
+
+async function addCriteria(criteriaLabel, criteriaId = null){
+    if (criteriaId == null){
+        criteriaId = toId(criteriaLabel)
+    }
+
+    const key = formatUniqueKey(IdConstants.CRITERIA, criteriaId);
+    await saveRedisObject(key, criteriaLabel)
+}
+
+
+async function editCriteria(criteriaId, newLabel){
+    addCriteria(newLabel, criteriaId)
+}
+
+
+async function deleteCriteria(criteriaId){
+    deleteRedisObject(criteriaId)
 }
 
 
@@ -288,5 +306,8 @@ module.exports = {
     deleteMessages,
     getCriterias,
     getCriteria,
+    addCriteria,
+    editCriteria,
+    deleteCriteria,
     initCriteriasFromEnv,
 };
