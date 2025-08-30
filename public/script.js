@@ -301,7 +301,10 @@ function formatUserMessagesInfo(messages) {
                     const value = document.querySelector(`input[name="criteria_${message.id}_${idx}"]:checked`)?.value;
                     const comments = document.getElementById(`comment_${message.id}_${idx}`).value;
 
-                    acc[criteria.id] = {
+                    // On enlève le prefixe "criteria:" s'il existe
+                    const cleanId = criteria.id.replace(/^criteria:/, "");
+
+                    acc[cleanId] = {
                         value: value ? (value === 'OK') : null,
                         comments: comments,
                         selected: true, // always true on this project, not in frontend

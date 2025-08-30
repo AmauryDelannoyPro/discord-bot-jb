@@ -60,18 +60,6 @@ const fromDiscordToPupilMessage = (messageDiscord, channelName, sectionName) => 
     }
 }
 
-
-const createEmptyEvaluationForm = () => {
-    const criteriasName = process.env.FORMULAIRE_CRITERES.split(",")
-    return criteriasName
-        .filter(criteria => criteria && criteria.trim())
-        .map(criteria => (
-            { label: criteria, id: "id_"+criteria.replaceAll(" ","-")}
-        ))
-        .sort((a, b) => a.label.localeCompare(b.label));
-}
-
-
 const formatEvaluationToPost = async (evaluation) => {
     // 1. Filtre les critères sélectionnés et dont l'évaluation ou le commentaire sont renseignés
     // 2. Formalise la réponse selon ce qui a été rempli dans le formulaire
@@ -84,7 +72,7 @@ const formatEvaluationToPost = async (evaluation) => {
             const emoji = eval.value !== null
                 ? (eval.value === true ? "✅" : "❌")
                 : "";
-            return `${criteriaId}: ${emoji} ${eval.comments}`.trim();
+            return `${eval.label}: ${emoji} ${eval.comments}`.trim();
         })
         .join("\n");
 
@@ -95,6 +83,5 @@ const formatEvaluationToPost = async (evaluation) => {
 module.exports = {
     fromDiscordToRedisMessage,
     fromDiscordToPupilMessage,
-    createEmptyEvaluationForm,
     formatEvaluationToPost,
 }

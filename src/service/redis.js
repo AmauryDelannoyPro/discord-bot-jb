@@ -23,6 +23,7 @@ const IdConstants = {
     MESSAGES: "messages",
     USER: "user",
     USERS: "users",
+    CRITERIA: "criteria",
 }
 
 function formatUniqueKey(prefix, objectId, suffix) {
@@ -217,6 +218,65 @@ async function deleteMessages(messageIds) {
 // endregion messages
 
 
+// region criterias
+// ----- GETTER -----
+async function getCriterias(){
+    // Récupère la liste de tous les critères en base
+    let cursor = 0;
+    const criterias = [];
+
+    try {
+        do {
+            const scanResult = await client.scan(cursor, { MATCH: IdConstants.CRITERIA + ':*' });
+            cursor = scanResult.cursor;
+            const keys = scanResult.keys;
+
+            for (const key of keys) {
+                const criteria = await getRedisObject(key);
+                criterias.push({id: key, label: criteria});
+            }
+        } while (cursor !== 0);
+    } catch (error) {
+        // Do something ...
+    }
+
+    return criterias;
+}
+
+
+async function getCriteria(criteriaId){
+    const criteria = await getRedisObject(formatUniqueKey(IdConstants.CRITERIA, criteriaId));
+    return {
+        id : criteriaId,
+        label : criteria,
+    }
+}
+
+// ----- SETTER -----
+async function initCriteriasFromEnv(){
+    // Sauvegarde une liste de critères en base depuis ce qui est défini dans le fichier de conf
+    const criteriasName = process.env.FORMULAIRE_CRITERES.split(",")
+    for (const criteria of criteriasName){
+        const id = toId(criteria)
+        const key = formatUniqueKey(IdConstants.CRITERIA, id);
+
+        await saveRedisObject(key, criteria)
+    }
+}
+
+
+function toId(str) {
+    // Donne un format à l'ID pour le critère à partir de son libellé
+    return "id_" + str
+        .normalize("NFD")                   // décompose les accents (é → e +  ́)
+        .replace(/[\u0300-\u036f]/g, "")    // supprime les diacritiques (accents)
+        .replace(/[^a-zA-Z0-9\s_-]/g, "")   // supprime tout sauf lettres, chiffres, espaces, _ et -
+        .trim()                             // retire espaces en début/fin
+        .replace(/\s+/g, "-")               // remplace espaces multiples par un seul tiret
+        .toLowerCase();                     // met en minuscules
+}
+// endregion criterias
+
 module.exports = {
     getUsers,
     getUserMessages,
@@ -226,4 +286,7 @@ module.exports = {
     getUsersByRecentMessages,
     deleteMessage,
     deleteMessages,
+    getCriterias,
+    getCriteria,
+    initCriteriasFromEnv,
 };
