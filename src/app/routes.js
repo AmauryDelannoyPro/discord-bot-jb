@@ -15,7 +15,4 @@ router.get('/get-evaluation-criterias', messageController.getCriterias)
 // Route pour poster l'évaluation
 router.post('/send-message', messageController.postEvaluation);
 
-// Route pour poster l'évaluation
-router.post('/ignore-message', messageController.ignoreMessage);
-
 module.exports = router;

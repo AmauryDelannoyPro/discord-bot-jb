@@ -73,8 +73,13 @@ const createEmptyEvaluationForm = () => {
 
 
 const formatEvaluationToPost = async (evaluation) => {
+    // 1. Filtre les critères sélectionnés et dont l'évaluation ou le commentaire sont renseignés
+    // 2. Formalise la réponse selon ce qui a été rempli dans le formulaire
     const messageFormatted = Object.entries(evaluation)
-        .filter(([criteriaId, eval]) => eval.value !== null || eval.comments !== "")
+        .filter(
+        ([criteriaId, eval]) =>
+            eval.selected === true && (eval.value !== null || eval.comments !== "")
+        )
         .map(([criteriaId, eval]) => {
             const emoji = eval.value !== null
                 ? (eval.value === true ? "✅" : "❌")

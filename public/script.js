@@ -262,10 +262,11 @@ function formatUserMessagesInfo(messages) {
                         messageId: message.id,
                         channelId: message.channelId,
                         action: "ignore", //submit ou ignore
-                        evaluation: null,                    
+                        evaluation: null,
+                        selected: true, // always true on this project, not in frontend               
                     };
 
-                    const response = await fetch('/api/ignore-message', {
+                    const response = await fetch('/api/send-message', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -274,8 +275,12 @@ function formatUserMessagesInfo(messages) {
                     });
 
                     const divToUpdate = document.getElementById(`evaluation-${message.id}`);
+
+                    const responseBody = await response.json();
+                    const postedMessage = responseBody.content;
+
                     if (response.ok) {
-                        divToUpdate.innerHTML = "Le message sera masqué à l'avenir";
+                        divToUpdate.innerHTML = postedMessage;
                     } else {
                         divToUpdate.innerHTML = "Un problème est survenu, le message sera toujours visible";
                     }
@@ -299,6 +304,7 @@ function formatUserMessagesInfo(messages) {
                     acc[criteria.id] = {
                         value: value ? (value === 'OK') : null,
                         comments: comments,
+                        selected: true, // always true on this project, not in frontend
                     };
 
                     return acc;

@@ -36,6 +36,7 @@ const replyMessageOnDiscord = async (channelId, evaluation, messageIdToReply) =>
 const ignoreMessage = async (channelId, messageId) => {
     redis.deleteMessage(messageId)
     discord.addReactionToMessage(channelId, messageId)
+    return "Le message sera masqué à l'avenir"
 }
 
 
