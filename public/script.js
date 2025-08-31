@@ -23,6 +23,22 @@ function postMessage() {
         });
 }
 
+var evaluationForm = undefined;
+
+function getCriterias() {
+    fetch('/api/get-evaluation-criterias')
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+            evaluationForm = data;
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            document.getElementById('list-user-content').textContent = 'Erreur lors du chargement des données.';
+        });
+}
+
 // #region users
 function loadUsersContent() {
     fetch('/api/get-users')
@@ -131,8 +147,8 @@ function formatUserMessagesInfo(messages) {
         }
 
         // vidéo externe (YT, ...)
-        if (message.links) {
-            message.links.forEach(link => {
+        if (message.embeds) {
+            message.embeds.forEach(link => {
                 const videoDiv = document.createElement('div');
                 videoDiv.className = 'videoContent';
                 videoDiv.innerHTML = `<iframe width="560" height="315" src="${link}" frameborder="0" allowfullscreen></iframe>`;
@@ -147,12 +163,12 @@ function formatUserMessagesInfo(messages) {
         evaluationDiv.id = `evaluation-${message.id}`;
 
         // Evaluation à faire
-        if (message.evaluationForm) {
+        if (message.evaluation === null && evaluationForm !== undefined) {
             const criteriasDiv = document.createElement('div');
             criteriasDiv.className = 'criteriasContent';
 
-            for (let i = 0; i < message.evaluationForm.length; i++) {
-                const criteria = message.evaluationForm[i];
+            for (let i = 0; i < evaluationForm.length; i++) {
+                const criteria = evaluationForm[i];
 
                 // Create a container for each criterion (form-group)
                 const formGroup = document.createElement('div');
@@ -242,17 +258,29 @@ function formatUserMessagesInfo(messages) {
                 ignoreButton.style.display = 'none';
 
                 try {
-                    const response = await fetch('/api/ignore-message', {
+                    const payload = {
+                        messageId: message.id,
+                        channelId: message.channelId,
+                        action: "ignore", //submit ou ignore
+                        evaluation: null,
+                        selected: true, // always true on this project, not in frontend               
+                    };
+
+                    const response = await fetch('/api/send-message', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ messageId: message.id, channelId: message.channelId })
+                        body: JSON.stringify(payload)
                     });
 
                     const divToUpdate = document.getElementById(`evaluation-${message.id}`);
+
+                    const responseBody = await response.json();
+                    const postedMessage = responseBody.content;
+
                     if (response.ok) {
-                        divToUpdate.innerHTML = "Le message sera masqué à l'avenir";
+                        divToUpdate.innerHTML = postedMessage;
                     } else {
                         divToUpdate.innerHTML = "Un problème est survenu, le message sera toujours visible";
                     }
@@ -269,21 +297,24 @@ function formatUserMessagesInfo(messages) {
             submitButton.textContent = 'Envoi l\'évaluation';
             submitButton.addEventListener('click', async () => {
                 submitButton.disabled = true;
-                const evaluationData = message.evaluationForm.map((criteria, idx) => {
-                    const notation = document.querySelector(`input[name="criteria_${message.id}_${idx}"]:checked`)?.value;
-                    const comment = document.getElementById(`comment_${message.id}_${idx}`).value;
+                const evaluationData = evaluationForm.reduce((acc, criteria, idx) => {
+                    const value = document.querySelector(`input[name="criteria_${message.id}_${idx}"]:checked`)?.value;
+                    const comments = document.getElementById(`comment_${message.id}_${idx}`).value;
 
-                    return {
-                        criteria: criteria.label,
-                        notation: notation ? (notation === 'OK') : null,
-                        comment: comment
+                    acc[criteria.id] = {
+                        value: value ? (value === 'OK') : null,
+                        comments: comments,
+                        selected: true, // always true on this project, not in frontend
                     };
-                });
+
+                    return acc;
+                }, {});
 
                 const payload = {
                     messageId: message.id,
                     channelId: message.channelId,
-                    evaluationForm: evaluationData
+                    action: "submit", // submit ou ignore
+                    evaluation: evaluationData,
                 };
 
                 try {
@@ -296,7 +327,7 @@ function formatUserMessagesInfo(messages) {
                     });
 
                     const responseBody = await response.json();
-                    const postedMessage = responseBody.messageResponse;
+                    const postedMessage = responseBody.content;
 
                     if (response.ok) {
                         const divToUpdate = document.getElementById(`evaluation-${message.id}`);
@@ -322,12 +353,12 @@ function formatUserMessagesInfo(messages) {
         enableSpeechRecognition();
 
         // Evaluation déjà faite
-        if (message.evaluationDone) {
+        if (message.evaluation) {
             const criteriaRow = document.createElement('div');
             criteriaRow.className = 'evaluationDone';
 
             const criteriaText = document.createElement('div');
-            criteriaText.innerHTML = message.evaluationDone.replace(/\n/g, '<br>');
+            criteriaText.innerHTML = message.evaluation.content.replace(/\n/g, '<br>');
 
             criteriaRow.appendChild(criteriaText);
 
@@ -347,6 +378,7 @@ function formatUserMessagesInfo(messages) {
 
 function initView() {
     loadUsersContent()
+    getCriterias()
 }
 
 // Charger les données dynamiques au chargement de la page

@@ -1,5 +1,6 @@
 const utils = require('../utils/utils')
 
+// DEPRECATED
 const fromDiscordToRedisMessage = (messageDiscord, channelName, sectionName) => {
     let attachments = []
     messageDiscord.attachments.forEach(attachment => {
@@ -30,35 +31,57 @@ const fromDiscordToRedisMessage = (messageDiscord, channelName, sectionName) => 
     }
 }
 
+const fromDiscordToPupilMessage = (messageDiscord, channelName, sectionName) => {
+    let links = []
+    messageDiscord.embeds.forEach(embed => {
+        const formattedUrl = utils.formatUrl(embed.url)
+        if (formattedUrl) {
+            links.push(formattedUrl)
+        }
+    })
+    messageDiscord.attachments.forEach(attachment => {
+        links.push(attachment.url)
+    })
 
-const createEmptyEvaluationForm = () => {
-    const criteriasName = process.env.FORMULAIRE_CRITERES.split(",")
-    return criteriasName
-        .filter(criteria => criteria && criteria.trim())
-        .map(criteria => (
-            { label: criteria, notation: null, comment: "" }
-        ))
-        .sort((a, b) => a.label.localeCompare(b.label));
+    return {
+        id: messageDiscord.id,
+        channelId: messageDiscord.channelId,
+        author: {
+            id: messageDiscord.author.id,
+            name: messageDiscord.author.username,
+            avatar: messageDiscord.author.displayAvatarURL(),
+        },
+        channel: channelName,
+        date: messageDiscord.editedTimestamp ? messageDiscord.editedTimestamp : messageDiscord.createdTimestamp,
+        content: messageDiscord.content,
+        embeds : links,
+        evaluation : null,
+        replyTo: messageDiscord.reference?.messageId || null
+    }
 }
 
-
-const formatEvaluationToPost = async (evaluations) => {
-    const messageFormatted = evaluations
-        .filter(evaluation => evaluation.notation !== null || evaluation.comment !== "")
-        .map(evaluation => {
-            const emoji = evaluation.notation !== null
-                ? (evaluation.notation === true ? "✅" : "❌")
+const formatEvaluationToPost = async (evaluation) => {
+    // 1. Filtre les critères sélectionnés et dont l'évaluation ou le commentaire sont renseignés
+    // 2. Formalise la réponse selon ce qui a été rempli dans le formulaire
+    const messageFormatted = Object.entries(evaluation)
+        .filter(
+        ([criteriaId, eval]) =>
+            eval.selected === true && (eval.value !== null || eval.comments !== "")
+        )
+        .map(([criteriaId, eval]) => {
+            const emoji = eval.value !== null
+                ? (eval.value === true ? "✅" : "❌")
                 : "";
-            return `${evaluation.criteria}: ${emoji} ${evaluation.comment}`.trim();
+            return `${eval.label}: ${emoji} ${eval.comments}`.trim();
         })
         .join("\n");
 
-    return messageFormatted
-}
+    return messageFormatted;
+};
 
 
 module.exports = {
     fromDiscordToRedisMessage,
-    createEmptyEvaluationForm,
+    fromDiscordToPupilMessage,
     formatEvaluationToPost,
 }

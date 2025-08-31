@@ -23,6 +23,7 @@ const IdConstants = {
     MESSAGES: "messages",
     USER: "user",
     USERS: "users",
+    CRITERIA: "criteria",
 }
 
 function formatUniqueKey(prefix, objectId, suffix) {
@@ -123,15 +124,56 @@ async function getUserMessages(userId) {
 
         if (evaluationId !== null) {
             const evaluationMessage = await getRedisObject(formatUniqueKey(IdConstants.MESSAGE, evaluationId));
-            message.evaluationDone = evaluationMessage.content;
-        } else {
-            message.evaluationForm = messageAdapter.createEmptyEvaluationForm();
+            message.evaluation = {
+                id : evaluationId,
+                content : evaluationMessage.content,
+            }
         }
         return message;
     });
 
     const messages = await Promise.all(fetchMessagesPromises);
-    messages.sort((a, b) => b.updatedAt - a.updatedAt);
+    messages.sort((a, b) => b.date - a.date);
+    return messages;
+}
+
+async function getMessagesToEvaluateOldestFirst() {
+    // Fait une liste avec les évaluations et une liste des messages
+    // Puis filtre et tri les messages
+    let cursor = 0;
+    let messages = [];
+    const evaluationDone = [];
+
+    try {
+        do {
+            const scanResult = await client.scan(cursor, { MATCH: IdConstants.MESSAGE + ':*' });
+            cursor = scanResult.cursor;
+            const keys = scanResult.keys;
+
+            for (const key of keys) {
+                // Evaluations have suffix
+                if (key.startsWith(IdConstants.MESSAGE) && key.endsWith(IdConstants.EVALUATION_ID)) {
+                    const evaluatedMessageId = key.split(":")[1]
+                    evaluationDone.push(evaluatedMessageId)
+                } else {
+                    // Message with embeds elements (messages without are our bot evaluations)
+                    const msg = await getRedisObject(key);
+
+                    if (msg.embeds.length !== 0) {
+                        messages.push(msg);
+                    }
+                }
+            }
+        } while (cursor !== 0);
+    } catch (error) {
+        // Do something ...
+    }
+
+    // We filter messages with no evaluation
+    messages = messages
+        .filter(msg => !evaluationDone.includes(msg.id))
+        .sort((a, b) => a.date - b.date);
+
     return messages;
 }
 
@@ -143,7 +185,7 @@ async function saveMessages(messages) {
     })
     const fetchUserMessagesPromises = messages.map(message => {
         const key = formatUniqueKey(IdConstants.MESSAGE, message.id);
-        const keyMessages = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.MESSAGES);
+        const keyMessages = formatUniqueKey(IdConstants.USER, message.author.id, IdConstants.MESSAGES);
         return client.sAdd(keyMessages, key)
     })
 
@@ -151,7 +193,7 @@ async function saveMessages(messages) {
         await setLastMessage(message)
 
         // Save evaluation already done
-        if (message.authorName === process.env.DISCORD_BOT_NAME && message.replyTo !== null) {
+        if (message.author.name === process.env.DISCORD_BOT_NAME && message.replyTo !== null) {
             const key = formatUniqueKey(IdConstants.MESSAGE, message.replyTo, IdConstants.EVALUATION_ID);
             saveRedisObject(key, message.id)
         }
@@ -162,8 +204,8 @@ async function saveMessages(messages) {
 
 
 async function setLastMessage(message, force = false) {
-    const messageDate = new Date(message.updatedAt).getTime();
-    const lastMessageKey = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.LAST_MESSAGE_DATE)
+    const messageDate = new Date(message.date).getTime();
+    const lastMessageKey = formatUniqueKey(IdConstants.USER, message.author.id, IdConstants.LAST_MESSAGE_DATE)
 
     const lastSavedDate = await client.get(lastMessageKey);
     const lastSavedTimestamp = lastSavedDate ? parseInt(lastSavedDate) : 0;
@@ -190,16 +232,16 @@ async function deleteMessages(messageIds) {
         await deleteRedisObject(messageKey)
 
         // User's message (to get his/her message list)
-        const userMessagesKey = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.MESSAGES);
+        const userMessagesKey = formatUniqueKey(IdConstants.USER, message.author.id, IdConstants.MESSAGES);
         await client.sRem(userMessagesKey, messageKey)
 
         // Last message (to sort user by last message sent)
-        const lastMessageKey = formatUniqueKey(IdConstants.USER, message.authorId, IdConstants.LAST_MESSAGE_DATE)
+        const lastMessageKey = formatUniqueKey(IdConstants.USER, message.author.id, IdConstants.LAST_MESSAGE_DATE)
         const lastSavedDate = await client.get(lastMessageKey);
 
-        if (message.updatedAt == lastSavedDate) {
+        if (message.date == lastSavedDate) {
             // Save new last message of user
-            const userMessages = await getUserMessages(message.authorId)
+            const userMessages = await getUserMessages(message.author.id)
             if (userMessages.length > 0) {
                 const newLastMessage = userMessages[0]
                 setLastMessage(newLastMessage, true)
@@ -207,7 +249,7 @@ async function deleteMessages(messageIds) {
         }
 
         // Update evaluation if deleted a JBOT's message
-        if (message.authorName === process.env.DISCORD_BOT_NAME) {
+        if (message.author.name === process.env.DISCORD_BOT_NAME) {
             const key = formatUniqueKey(IdConstants.MESSAGE, message.replyTo, IdConstants.EVALUATION_ID);
             deleteRedisObject(key)
         }
@@ -216,13 +258,97 @@ async function deleteMessages(messageIds) {
 // endregion messages
 
 
+// region criterias
+// ----- GETTER -----
+async function getCriterias(){
+    // Récupère la liste de tous les critères en base
+    let cursor = 0;
+    const criterias = [];
+
+    try {
+        do {
+            const scanResult = await client.scan(cursor, { MATCH: IdConstants.CRITERIA + ':*' });
+            cursor = scanResult.cursor;
+            const keys = scanResult.keys;
+
+            for (const key of keys) {
+                const criteria = await getRedisObject(key);
+                const id = key.split(IdConstants.CRITERIA+":")[1]; 
+                criterias.push({id: id, label: criteria});
+            }
+        } while (cursor !== 0);
+    } catch (error) {
+        // Do something ...
+    }
+
+    return criterias;
+}
+
+
+async function getCriteria(criteriaId){
+    const criteria = await getRedisObject(formatUniqueKey(IdConstants.CRITERIA, criteriaId));
+    return {
+        id : criteriaId,
+        label : criteria,
+    }
+}
+
+// ----- SETTER -----
+async function initCriteriasFromEnv(){
+    // Sauvegarde une liste de critères en base depuis ce qui est défini dans le fichier de conf
+    const criteriasName = process.env.FORMULAIRE_CRITERES.split(",")
+    for (const criteria of criteriasName){
+        await addCriteria(criteria)
+    }
+}
+
+
+async function addCriteria(criteriaLabel, criteriaId = null){
+    if (criteriaId == null){
+        criteriaId = toId(criteriaLabel)
+    }
+
+    const key = formatUniqueKey(IdConstants.CRITERIA, criteriaId);
+    await saveRedisObject(key, criteriaLabel)
+}
+
+
+async function editCriteria(criteriaId, newLabel){
+    addCriteria(newLabel, criteriaId)
+}
+
+
+async function deleteCriteria(criteriaId){
+    deleteRedisObject(criteriaId)
+}
+
+
+function toId(str) {
+    // Donne un format à l'ID pour le critère à partir de son libellé
+    return "id_" + str
+        .normalize("NFD")                   // décompose les accents (é → e +  ́)
+        .replace(/[\u0300-\u036f]/g, "")    // supprime les diacritiques (accents)
+        .replace(/[^a-zA-Z0-9\s_-]/g, "")   // supprime tout sauf lettres, chiffres, espaces, _ et -
+        .trim()                             // retire espaces en début/fin
+        .replace(/\s+/g, "-")               // remplace espaces multiples par un seul tiret
+        .toLowerCase();                     // met en minuscules
+}
+// endregion criterias
+
 module.exports = {
     getUsers,
     getUserMessages,
+    getMessagesToEvaluateOldestFirst,
     saveUsers,
     saveMessages,
     resetRedis,
     getUsersByRecentMessages,
     deleteMessage,
     deleteMessages,
+    getCriterias,
+    getCriteria,
+    addCriteria,
+    editCriteria,
+    deleteCriteria,
+    initCriteriasFromEnv,
 };

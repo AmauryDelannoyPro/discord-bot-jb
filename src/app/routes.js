@@ -9,10 +9,13 @@ router.get('/get-users', userController.getUsers);
 // Route pour récupérer la liste des messages d'un utilisateur
 router.get('/get-user-messages', messageController.getUserMessages);
 
+// Route pour récupérer les critères d'évaluations
+router.get('/get-evaluation-criterias', messageController.getCriterias)
+
 // Route pour poster l'évaluation
 router.post('/send-message', messageController.postEvaluation);
 
-// Route pour poster l'évaluation
-router.post('/ignore-message', messageController.ignoreMessage);
+// Route pour récupérer tous les messages en attente d'évaluation
+router.get('/get-not-evaluated-messages', messageController.getNotEvaluatedMessages)
 
 module.exports = router;

@@ -75,7 +75,7 @@ const handleNewMessage = async (messageDiscord) => {
     if (await filterMessage(messageDiscord)) {
         const channel = await client.channels.fetch(messageDiscord.channelId);
         const sectionName = await getSectionName(channel.parentId)
-        redis.saveMessages([messageAdapter.fromDiscordToRedisMessage(messageDiscord, channel.name, sectionName)])
+        redis.saveMessages([messageAdapter.fromDiscordToPupilMessage(messageDiscord, channel.name, sectionName)])
     } else {
         redis.deleteMessage(messageDiscord.id)
     }
@@ -94,7 +94,7 @@ const fetchMessages = async (channelId) => {
         for (const message of messages.values()) {
             if (await filterMessage(message)) {
                 results.push(
-                    messageAdapter.fromDiscordToRedisMessage(message, channel.name, sectionName)
+                    messageAdapter.fromDiscordToPupilMessage(message, channel.name, sectionName)
                 );
             }
         }
