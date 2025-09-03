@@ -69,8 +69,8 @@ const formatEvaluationToPost = async (evaluation) => {
             eval.selected === true && (eval.value !== null || eval.comments !== "")
         )
         .map(([criteriaId, eval]) => {
-            const emoji = eval.value !== null
-                ? (eval.value === true ? "✅" : "❌")
+            const emoji = eval.value !== null && eval.value !== ""
+                ? (eval.value === "OK" ? "✅" : "❌")
                 : "";
             return `${eval.label}: ${emoji} ${eval.comments}`.trim();
         })
