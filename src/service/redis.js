@@ -137,12 +137,12 @@ async function getUserMessages(userId) {
     return messages;
 }
 
-async function getMessagesToEvaluateOldestFirst() {
+async function getMessagesOldestFirst(evaluationStatus) {
     // Fait une liste avec les évaluations et une liste des messages
     // Puis filtre et tri les messages
     let cursor = 0;
     let messages = [];
-    const evaluationDone = [];
+    const evaluationDone = new Map();
 
     try {
         do {
@@ -154,12 +154,12 @@ async function getMessagesToEvaluateOldestFirst() {
                 // Evaluations have suffix
                 if (key.startsWith(IdConstants.MESSAGE) && key.endsWith(IdConstants.EVALUATION_ID)) {
                     const evaluatedMessageId = key.split(":")[1]
-                    evaluationDone.push(evaluatedMessageId)
+                    evaluationDone.set(evaluatedMessageId, key)
                 } else {
                     // Message with embeds elements (messages without are our bot evaluations)
                     const msg = await getRedisObject(key);
 
-                    if (msg.embeds.length !== 0) {
+                    if (msg.embeds.length !== 0) { 
                         messages.push(msg);
                     }
                 }
@@ -169,10 +169,29 @@ async function getMessagesToEvaluateOldestFirst() {
         // Do something ...
     }
 
-    // We filter messages with no evaluation
+    // We filter messages based on evaluationStatus
+    // true: messages with evaluation
+    // false: messages without evaluation
+    // undefined: all messages
     messages = messages
-        .filter(msg => !evaluationDone.includes(msg.id))
+        .filter(msg => evaluationStatus == undefined || evaluationStatus === (evaluationDone.get(msg.id) != undefined))
         .sort((a, b) => a.date - b.date);
+
+    if(evaluationStatus !== false){
+        await Promise.all(
+            messages.map(async (msg) => {
+                const evaluationRef = evaluationDone.get(msg.id)
+                if(evaluationRef != undefined){
+                    const evaluationId = await getRedisObject(evaluationDone.get(msg.id))
+                    const evaluationMessage = await getRedisObject(formatUniqueKey(IdConstants.MESSAGE, evaluationId));
+                    msg.evaluation = {
+                        id : evaluationId,
+                        content : evaluationMessage.content,
+                    }
+                }
+            })
+        )
+    }
 
     return messages;
 }
@@ -338,7 +357,7 @@ function toId(str) {
 module.exports = {
     getUsers,
     getUserMessages,
-    getMessagesToEvaluateOldestFirst,
+    getMessagesOldestFirst,
     saveUsers,
     saveMessages,
     resetRedis,

@@ -58,9 +58,10 @@ const getCriterias = async (req, res) => {
 }
 
 
-const getNotEvaluatedMessages = async (req, res) => {
+const getMessages = async (req, res) => {
     try {
-        const response = await messageRepository.getNotEvaluatedMessages()
+        const evaluationStatus = req.query.evaluationStatus ? req.query.evaluationStatus === 'true' : undefined
+        const response = await messageRepository.getMessages(evaluationStatus)
         if (!response) {
             throw new Error();
         }
@@ -75,5 +76,5 @@ module.exports = {
     getUserMessages,
     postEvaluation,
     getCriterias,
-    getNotEvaluatedMessages,
+    getMessages,
 }

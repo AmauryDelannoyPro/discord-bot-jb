@@ -8,6 +8,7 @@ const serverId = process.env.DISCORD_SERVER_ID
 
 const client = new Discord.Client({
     intents: [
+        Discord.GatewayIntentBits.Guilds,
         Discord.GatewayIntentBits.GuildMembers,
         Discord.GatewayIntentBits.GuildMessages,
         Discord.GatewayIntentBits.MessageContent,
